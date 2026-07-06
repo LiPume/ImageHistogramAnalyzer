@@ -1,0 +1,4 @@
+interface:
+  display_name: "项目文档同步"
+  short_description: "随代码与技术决策同步维护项目 TODO、设计、测试和使用文档"
+  default_prompt: "Use $project-doc-sync to synchronize project documentation with the latest verified implementation changes."

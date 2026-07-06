@@ -69,6 +69,12 @@ Before completing a change:
 4. Summarize changed files, verification results, remaining risk, and the next task ID.
 5. Use focused commit messages such as `feat:`, `test:`, `perf:`, `docs:`, or `build:`; keep `main` runnable.
 
+Apply the supporting project skills when their trigger is met:
+
+- `$android-test-gate` after each meaningful code slice and before task completion.
+- `$project-doc-sync` after verified code, decision, status, test, or user-flow changes.
+- `$project-git-checkpoint` at a safe TODO-sized checkpoint, stage boundary, or handoff.
+
 ## Reference routing
 
 - Read [project-contract.md](references/project-contract.md) for fixed scope, SDK, package structure, algorithm semantics, and rejected upstream defaults.

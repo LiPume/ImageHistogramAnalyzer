@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android 代码测试门禁"
+  short_description: "为每段 Android 代码选择、补充、执行并记录分层验证测试"
+  default_prompt: "Use $android-test-gate to add and run the appropriate tests for the latest Android code change."

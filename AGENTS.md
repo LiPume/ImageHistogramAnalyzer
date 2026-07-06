@@ -2,6 +2,12 @@
 
 Use `.github/skills/image-histogram-android/SKILL.md` for Android, Gradle, Compose, image-processing, histogram, performance, testing, and project-documentation work in this repository.
 
+Supporting workflow skills:
+
+- `.github/skills/android-test-gate/SKILL.md`: require proportional tests after each meaningful code slice.
+- `.github/skills/project-doc-sync/SKILL.md`: synchronize TODO, design, testing, and usage documents from evidence.
+- `.github/skills/project-git-checkpoint/SKILL.md`: create safe, tested, authorized Git checkpoints at logical boundaries.
+
 Before editing:
 
 1. Read `docs/迭代计划与TODO.md` and select one task ID.

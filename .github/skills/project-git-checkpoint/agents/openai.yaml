@@ -1,0 +1,4 @@
+interface:
+  display_name: "项目 Git 检查点"
+  short_description: "在安全开发节点检查、验证、提交并同步清晰可回退的项目变更"
+  default_prompt: "Use $project-git-checkpoint to create a safe, tested Git checkpoint for the current project work."
