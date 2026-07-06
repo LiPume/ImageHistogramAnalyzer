@@ -18,6 +18,7 @@ In scope:
 - System image selection, URI handling, preview, image dimensions, and pixel count.
 - Optional on-device camera capture that reuses the same decode and analysis pipeline.
 - Grayscale histogram calculation, normalization, Canvas display, and timing.
+- Performance optimization may use hot-loop/branch reduction, buffer reuse, multithreading, C++/JNI, ARM NEON SIMD, or third-party libraries when measurements justify them; conversion and integration overhead must be included in comparisons.
 - Mean gray, dark/bright ratios, standard deviation, and rule-based quality labels.
 - Baseline/Optimized equality and performance comparison.
 - Unit/UI/instrumented tests, reports, usage instructions, and defense material.
