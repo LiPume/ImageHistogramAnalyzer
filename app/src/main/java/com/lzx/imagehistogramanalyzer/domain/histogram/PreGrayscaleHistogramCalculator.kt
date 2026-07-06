@@ -21,17 +21,34 @@ class PreGrayscaleHistogramCalculator(
 
         val grayscaleStart = clock.nowNanos()
         val grayscalePixels = IntArray(pixels.size)
-        pixels.forEachIndexed { index, pixel ->
-            checkCancellation(index, cancellationCheck)
-            grayscalePixels[index] = GrayscaleConverter.fromArgb(pixel)
+        var chunkStart = 0
+        while (chunkStart < pixels.size) {
+            cancellationCheck()
+            val chunkEnd = minOf(chunkStart + CANCELLATION_CHECK_INTERVAL, pixels.size)
+            var index = chunkStart
+            while (index < chunkEnd) {
+                grayscalePixels[index] = GrayscaleConverter.fromArgb(pixels[index])
+                index++
+            }
+            chunkStart = chunkEnd
         }
         val grayscaleNanos = clock.nowNanos() - grayscaleStart
 
         val countingStart = clock.nowNanos()
         val counts = IntArray(HistogramResult.GRAY_LEVELS)
-        grayscalePixels.forEachIndexed { index, gray ->
-            checkCancellation(index, cancellationCheck)
-            counts[gray]++
+        chunkStart = 0
+        while (chunkStart < grayscalePixels.size) {
+            cancellationCheck()
+            val chunkEnd = minOf(
+                chunkStart + CANCELLATION_CHECK_INTERVAL,
+                grayscalePixels.size,
+            )
+            var index = chunkStart
+            while (index < chunkEnd) {
+                counts[grayscalePixels[index]]++
+                index++
+            }
+            chunkStart = chunkEnd
         }
 
         val maxCount = counts.maxOrNull() ?: 0
@@ -55,10 +72,6 @@ class PreGrayscaleHistogramCalculator(
                 normalizationNanos = normalizationNanos,
             ),
         )
-    }
-
-    private fun checkCancellation(index: Int, cancellationCheck: () -> Unit) {
-        if (index % CANCELLATION_CHECK_INTERVAL == 0) cancellationCheck()
     }
 
     companion object {

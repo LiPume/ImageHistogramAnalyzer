@@ -21,12 +21,18 @@ class BaselineHistogramCalculator(
 
         val countingStart = clock.nowNanos()
         val counts = IntArray(HistogramResult.GRAY_LEVELS)
-        pixels.forEachIndexed { index, pixel ->
-            // 大图每处理一块检查一次取消，避免新图片选择后旧任务继续占用 CPU。
-            if (index % CANCELLATION_CHECK_INTERVAL == 0) cancellationCheck()
-
-            val gray = GrayscaleConverter.fromArgb(pixel)
-            counts[gray]++
+        var chunkStart = 0
+        while (chunkStart < pixels.size) {
+            // 只在分块边界检查取消，避免在逐像素热循环中执行取模与回调判断。
+            cancellationCheck()
+            val chunkEnd = minOf(chunkStart + CANCELLATION_CHECK_INTERVAL, pixels.size)
+            var index = chunkStart
+            while (index < chunkEnd) {
+                val gray = GrayscaleConverter.fromArgb(pixels[index])
+                counts[gray]++
+                index++
+            }
+            chunkStart = chunkEnd
         }
 
         val maxCount = counts.maxOrNull() ?: 0
