@@ -1,0 +1,24 @@
+# Android Studio / IntelliJ IDEA
+*.iml
+.idea/
+
+# Gradle 与各模块构建产物
+.gradle/
+**/build/
+
+# 本机 Android SDK 配置
+local.properties
+
+# Native 构建产物
+.externalNativeBuild/
+.cxx/
+
+# 测试、截图与系统文件
+captures/
+.DS_Store
+
+# 外部开源参考仓库仅供本地阅读，不纳入本项目版本控制
+references/open_source/
+
+# 课程原始 Word 材料保留在本地；Git 中维护对应 Markdown 文档
+docs/*.docx
