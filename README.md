@@ -15,6 +15,16 @@
 - `docs/协作规范.md`
 - `docs/开源项目技术借鉴记录.md`
 
+## 项目专用 Agent Skill
+
+项目级技能位于：
+
+```text
+.github/skills/image-histogram-android/
+```
+
+它约束 AI 助手遵循本项目的单模块架构、课程范围、灰度公式、256×100 输出、性能证据和文档同步要求。Codex 可使用 `$image-histogram-android` 显式调用；其他支持 Agent Skills 的工具可直接读取该目录中的 `SKILL.md`。
+
 ## 获取外部参考仓库
 
 外部项目仅供本地技术调研，不属于本项目源码，也不会被 Git 提交。首次使用或需要更新时执行：
@@ -23,7 +33,7 @@
 ./scripts/fetch_references.sh
 ```
 
-脚本会将参考仓库放在 `references/open_source/`。禁止把其中代码直接复制到 `app/src/main`。
+脚本会将图像直方图参考项目和 Android Agent Skills 素材库放在 `references/open_source/`。禁止把其中代码直接复制到 `app/src/main`，也不要把外部技能整套复制进本项目。
 
 ## 开发与文档并行原则
 
@@ -51,4 +61,3 @@ git status --short
 ```
 
 提交前确认没有纳入 `build/`、`.gradle/`、`local.properties` 或 `references/open_source/`。
-

@@ -42,6 +42,6 @@ sync_repository() {
 
 sync_repository "pixel-proc" "https://github.com/sixo/pixel-proc.git"
 sync_repository "histogram" "https://github.com/billthefarmer/histogram.git"
+sync_repository "awesome-android-agent-skills" "https://github.com/new-silvermoon/awesome-android-agent-skills.git"
 
 echo "参考仓库已准备在 ${REFERENCE_DIR}"
-

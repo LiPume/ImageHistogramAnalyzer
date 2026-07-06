@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android 图像直方图开发"
+  short_description: "面向本课程项目的 Android 架构、算法、性能与验收约束"
+  default_prompt: "Use $image-histogram-android to implement the next TODO task while preserving correctness, performance evidence, and documentation sync."
