@@ -1,0 +1,15 @@
+package com.lzx.imagehistogramanalyzer.ui.analyzer
+
+import android.graphics.Bitmap
+import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
+import com.lzx.imagehistogramanalyzer.domain.model.ImageMetadata
+
+data class AnalyzerUiState(
+    val isProcessing: Boolean = false,
+    val image: Bitmap? = null,
+    val metadata: ImageMetadata? = null,
+    val histogram: HistogramResult? = null,
+    val decodeTimeNanos: Long? = null,
+    val calculationTimeNanos: Long? = null,
+    val errorMessage: String? = null,
+)

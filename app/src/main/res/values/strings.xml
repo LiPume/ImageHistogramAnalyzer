@@ -1,3 +1,25 @@
 <resources>
-    <string name="app_name">ImageHistogramAnalyzer</string>
+    <string name="app_name">图像直方图分析</string>
+    <string name="app_intro">选择一张本地图片，应用会统计 0–255 灰度频次，绘制 256×100 黑白直方图，并展示核心计算耗时。</string>
+    <string name="pick_image_title">开始分析</string>
+    <string name="pick_image_description">通过系统图片选择器读取图片，不需要申请相册存储权限。MVP 单张图片上限为 1600 万像素。</string>
+    <string name="select_image">从相册选择图片</string>
+    <string name="replace_image">重新选择图片</string>
+    <string name="processing_image">正在读取并计算直方图…</string>
+    <string name="processing_error_title">处理失败</string>
+    <string name="image_preview_title">图片预览</string>
+    <string name="selected_image_description">当前选择的待分析图片</string>
+    <string name="image_resolution">分辨率</string>
+    <string name="image_pixel_count">像素数量</string>
+    <string name="image_mime_type">文件类型</string>
+    <string name="histogram_title">灰度直方图</string>
+    <string name="histogram_description">横轴为灰度 0–255，纵轴归一化到 0–100；白底黑柱。</string>
+    <string name="histogram_max_count">最高灰度频次：%1$d</string>
+    <string name="histogram_accessibility_description">256 个灰度等级的黑白直方图</string>
+    <string name="performance_title">生成性能</string>
+    <string name="decode_time">图片解码</string>
+    <string name="calculation_time">核心计算</string>
+    <string name="performance_target_met">已达到核心计算 300ms 目标</string>
+    <string name="performance_target_not_met">暂未达到核心计算 300ms 目标</string>
+    <string name="performance_scope">核心计算包含 Bitmap 批量取像素、灰度统计和 0–100 归一化；解码耗时单独展示。</string>
 </resources>
