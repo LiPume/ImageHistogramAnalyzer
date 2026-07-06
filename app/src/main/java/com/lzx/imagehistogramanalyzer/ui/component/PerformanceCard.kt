@@ -14,10 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lzx.imagehistogramanalyzer.R
+import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
 import java.util.Locale
 
 @Composable
 fun PerformanceCard(
+    strategy: HistogramCalculationStrategy,
     decodeTimeNanos: Long,
     calculationTimeNanos: Long,
     modifier: Modifier = Modifier,
@@ -48,6 +50,26 @@ fun PerformanceCard(
                 style = MaterialTheme.typography.titleMedium,
                 color = contentColor,
             )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(stringResource(R.string.selected_strategy), color = contentColor)
+                Text(
+                    text = stringResource(
+                        when (strategy) {
+                            HistogramCalculationStrategy.PRE_GRAYSCALE -> {
+                                R.string.strategy_pre_grayscale
+                            }
+
+                            HistogramCalculationStrategy.GRAYSCALE_WHILE_COUNTING -> {
+                                R.string.strategy_while_counting
+                            }
+                        },
+                    ),
+                    color = contentColor,
+                )
+            }
             TimeRow(
                 label = stringResource(R.string.decode_time),
                 nanos = decodeTimeNanos,

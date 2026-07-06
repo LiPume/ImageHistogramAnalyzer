@@ -1,12 +1,21 @@
 package com.lzx.imagehistogramanalyzer.ui
 
+import android.graphics.Bitmap
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
+import com.lzx.imagehistogramanalyzer.domain.model.ImageMetadata
 import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerScreen
 import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerUiState
 import com.lzx.imagehistogramanalyzer.ui.theme.ImageHistogramAnalyzerTheme
@@ -26,11 +35,13 @@ class AnalyzerScreenTest {
                 AnalyzerScreen(
                     uiState = AnalyzerUiState(),
                     onPickImage = { clicked = true },
+                    onSelectStrategy = {},
+                    onCalculate = {},
                 )
             }
         }
 
-        composeRule.onNodeWithText("从相册选择图片")
+        composeRule.onNodeWithText("开始分析")
             .assertIsDisplayed()
             .assertHasClickAction()
             .performClick()
@@ -54,15 +65,63 @@ class AnalyzerScreenTest {
                         ),
                         decodeTimeNanos = 2_000_000,
                         calculationTimeNanos = 10_000_000,
+                        selectedStrategy = HistogramCalculationStrategy.GRAYSCALE_WHILE_COUNTING,
                     ),
                     onPickImage = {},
+                    onSelectStrategy = {},
+                    onCalculate = {},
                 )
             }
         }
 
-        composeRule.onNodeWithText("灰度直方图").assertIsDisplayed()
+        composeRule.onNodeWithText("灰度直方图").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithContentDescription("256 个灰度等级的黑白直方图")
             .assertIsDisplayed()
-        composeRule.onNodeWithText("已达到核心计算 300ms 目标").assertIsDisplayed()
+        composeRule.onNodeWithText("已达到核心计算 300ms 目标")
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun selectedImage_requiresStrategyBeforeCalculation() {
+        val bitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
+        var uiState by mutableStateOf(
+            AnalyzerUiState(
+                image = bitmap,
+                metadata = ImageMetadata(
+                    displayName = "test.jpg",
+                    mimeType = "image/jpeg",
+                    width = 2,
+                    height = 2,
+                ),
+            ),
+        )
+        var calculated = false
+
+        composeRule.setContent {
+            ImageHistogramAnalyzerTheme {
+                AnalyzerScreen(
+                    uiState = uiState,
+                    onPickImage = {},
+                    onSelectStrategy = { strategy ->
+                        uiState = uiState.copy(selectedStrategy = strategy)
+                    },
+                    onCalculate = { calculated = true },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("计算并绘制直方图")
+            .performScrollTo()
+            .assertIsNotEnabled()
+        composeRule.onNodeWithText("优先灰度化")
+            .performScrollTo()
+            .performClick()
+
+        assertTrue(uiState.selectedStrategy == HistogramCalculationStrategy.PRE_GRAYSCALE)
+        composeRule.onNodeWithText("计算并绘制直方图")
+            .assertIsEnabled()
+            .performClick()
+        assertTrue(calculated)
     }
 }

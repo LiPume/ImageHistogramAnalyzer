@@ -16,6 +16,7 @@ Confirm the actual Gradle configuration before changing version numbers. Do not 
 In scope:
 
 - System image selection, URI handling, preview, image dimensions, and pixel count.
+- Optional on-device camera capture that reuses the same decode and analysis pipeline.
 - Grayscale histogram calculation, normalization, Canvas display, and timing.
 - Mean gray, dark/bright ratios, standard deviation, and rule-based quality labels.
 - Baseline/Optimized equality and performance comparison.
@@ -24,7 +25,7 @@ In scope:
 Out of scope unless the user explicitly changes requirements:
 
 - Login, registration, account management, database, backend, cloud storage, networking, social sharing.
-- Camera capture, editing suite, machine learning, Room, Retrofit, Hilt, Navigation graphs, and production-style multi-module architecture.
+- Editing suite, machine learning, Room, Retrofit, Hilt, Navigation graphs, and production-style multi-module architecture.
 
 ## Package ownership
 

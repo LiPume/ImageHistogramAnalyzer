@@ -7,6 +7,7 @@ import com.lzx.imagehistogramanalyzer.data.image.BitmapDecoder
 import com.lzx.imagehistogramanalyzer.data.image.BitmapPixelReader
 import com.lzx.imagehistogramanalyzer.data.image.ImageRepository
 import com.lzx.imagehistogramanalyzer.domain.histogram.BaselineHistogramCalculator
+import com.lzx.imagehistogramanalyzer.domain.histogram.PreGrayscaleHistogramCalculator
 
 class AnalyzerViewModelFactory(
     private val contentResolver: ContentResolver,
@@ -19,7 +20,10 @@ class AnalyzerViewModelFactory(
         return AnalyzerViewModel(
             imageRepository = ImageRepository(BitmapDecoder(contentResolver)),
             pixelReader = BitmapPixelReader(),
-            histogramCalculator = BaselineHistogramCalculator(),
+            histogramCalculators = listOf(
+                PreGrayscaleHistogramCalculator(),
+                BaselineHistogramCalculator(),
+            ),
         ) as T
     }
 }

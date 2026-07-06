@@ -3,14 +3,14 @@ package com.lzx.imagehistogramanalyzer.domain.histogram
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
 
 /**
- * MVP 基础算法：单线程遍历 ARGB 像素并统计灰度频次。
+ * 方案一：先把全部彩色像素转换成灰度数组，再单独统计灰度频次。
  *
- * Alpha 通道不参与课程指定公式，透明像素仍按其解码后的 RGB 值统计。
+ * 该方案逻辑直观，但需要额外的灰度数组和第二次遍历。
  */
-class BaselineHistogramCalculator(
+class PreGrayscaleHistogramCalculator(
     private val normalizer: HistogramNormalizer = HistogramNormalizer(),
 ) : HistogramCalculator {
-    override val strategy = HistogramCalculationStrategy.GRAYSCALE_WHILE_COUNTING
+    override val strategy = HistogramCalculationStrategy.PRE_GRAYSCALE
 
     override fun calculate(
         pixels: IntArray,
@@ -18,12 +18,15 @@ class BaselineHistogramCalculator(
     ): HistogramResult {
         require(pixels.isNotEmpty()) { "待分析像素不能为空" }
 
-        val counts = IntArray(HistogramResult.GRAY_LEVELS)
+        val grayscalePixels = IntArray(pixels.size)
         pixels.forEachIndexed { index, pixel ->
-            // 大图每处理一块检查一次取消，避免新图片选择后旧任务继续占用 CPU。
-            if (index % CANCELLATION_CHECK_INTERVAL == 0) cancellationCheck()
+            checkCancellation(index, cancellationCheck)
+            grayscalePixels[index] = GrayscaleConverter.fromArgb(pixel)
+        }
 
-            val gray = GrayscaleConverter.fromArgb(pixel)
+        val counts = IntArray(HistogramResult.GRAY_LEVELS)
+        grayscalePixels.forEachIndexed { index, gray ->
+            checkCancellation(index, cancellationCheck)
             counts[gray]++
         }
 
@@ -34,6 +37,10 @@ class BaselineHistogramCalculator(
             pixelCount = pixels.size.toLong(),
             maxCount = maxCount,
         )
+    }
+
+    private fun checkCancellation(index: Int, cancellationCheck: () -> Unit) {
+        if (index % CANCELLATION_CHECK_INTERVAL == 0) cancellationCheck()
     }
 
     companion object {

@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">图像直方图分析</string>
-    <string name="app_intro">选择一张本地图片，应用会统计 0–255 灰度频次，绘制 256×100 黑白直方图，并展示核心计算耗时。</string>
-    <string name="pick_image_title">开始分析</string>
+    <string name="app_intro">先选择本地图片，再选择“优先灰度化”或“统计时灰度化”，最后计算并绘制 256×100 黑白直方图。</string>
+    <string name="pick_image_title">选择分析图片</string>
     <string name="pick_image_description">通过系统图片选择器读取图片，不需要申请相册存储权限。MVP 单张图片上限为 1600 万像素。</string>
-    <string name="select_image">从相册选择图片</string>
-    <string name="replace_image">重新选择图片</string>
-    <string name="processing_image">正在读取并计算直方图…</string>
+    <string name="select_image">开始分析</string>
+    <string name="replace_image">重新选择并分析</string>
+    <string name="processing_image">正在读取图片或计算直方图…</string>
     <string name="processing_error_title">处理失败</string>
     <string name="image_preview_title">图片预览</string>
     <string name="selected_image_description">当前选择的待分析图片</string>
@@ -16,7 +16,15 @@
     <string name="histogram_description">横轴为灰度 0–255，纵轴归一化到 0–100；白底黑柱。</string>
     <string name="histogram_max_count">最高灰度频次：%1$d</string>
     <string name="histogram_accessibility_description">256 个灰度等级的黑白直方图</string>
+    <string name="strategy_title">选择计算方案</string>
+    <string name="strategy_description">选择图片后不会自动分析。请选择课程要求的一个计算流程，再点击计算按钮。</string>
+    <string name="strategy_pre_grayscale">优先灰度化</string>
+    <string name="strategy_pre_grayscale_description">先生成完整灰度数组，再统计频次、归一化和绘制。</string>
+    <string name="strategy_while_counting">统计时灰度化</string>
+    <string name="strategy_while_counting_description">遍历彩色像素时同步灰度化和计数，再归一化和绘制。</string>
+    <string name="calculate_histogram">计算并绘制直方图</string>
     <string name="performance_title">生成性能</string>
+    <string name="selected_strategy">本次方案</string>
     <string name="decode_time">图片解码</string>
     <string name="calculation_time">核心计算</string>
     <string name="performance_target_met">已达到核心计算 300ms 目标</string>

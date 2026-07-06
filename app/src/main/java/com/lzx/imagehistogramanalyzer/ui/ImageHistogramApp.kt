@@ -14,7 +14,7 @@ import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerViewModel
 fun ImageHistogramApp(viewModel: AnalyzerViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val photoPicker = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
-        if (uri != null) viewModel.analyze(uri)
+        if (uri != null) viewModel.selectImage(uri)
     }
 
     AnalyzerScreen(
@@ -22,5 +22,7 @@ fun ImageHistogramApp(viewModel: AnalyzerViewModel) {
         onPickImage = {
             photoPicker.launch(PickVisualMediaRequest(ImageOnly))
         },
+        onSelectStrategy = viewModel::selectStrategy,
+        onCalculate = viewModel::calculateHistogram,
     )
 }
