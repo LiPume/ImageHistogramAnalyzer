@@ -15,16 +15,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lzx.imagehistogramanalyzer.R
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
+import com.lzx.imagehistogramanalyzer.domain.model.HistogramPerformanceMetrics
 import java.util.Locale
 
 @Composable
 fun PerformanceCard(
     strategy: HistogramCalculationStrategy,
     decodeTimeNanos: Long,
-    calculationTimeNanos: Long,
+    metrics: HistogramPerformanceMetrics,
     modifier: Modifier = Modifier,
 ) {
-    val calculationMillis = calculationTimeNanos / NANOS_PER_MILLISECOND
+    val calculationMillis = metrics.coreTotalNanos / NANOS_PER_MILLISECOND
     val targetMet = calculationMillis < TARGET_MILLIS
     val containerColor = if (targetMet) {
         MaterialTheme.colorScheme.primaryContainer
@@ -76,8 +77,58 @@ fun PerformanceCard(
                 contentColor = contentColor,
             )
             TimeRow(
+                label = stringResource(R.string.pixel_read_time),
+                nanos = metrics.pixelReadNanos,
+                contentColor = contentColor,
+            )
+            if (strategy == HistogramCalculationStrategy.PRE_GRAYSCALE) {
+                metrics.grayscaleConversionNanos?.let { grayscaleNanos ->
+                    TimeRow(
+                        label = stringResource(R.string.grayscale_conversion_time),
+                        nanos = grayscaleNanos,
+                        contentColor = contentColor,
+                    )
+                } ?: ValueRow(
+                    label = stringResource(R.string.grayscale_conversion_time),
+                    value = stringResource(R.string.not_available),
+                    contentColor = contentColor,
+                )
+                TimeRow(
+                    label = stringResource(R.string.histogram_counting_time),
+                    nanos = metrics.countingNanos,
+                    contentColor = contentColor,
+                )
+            } else {
+                TimeRow(
+                    label = stringResource(R.string.fused_grayscale_counting_time),
+                    nanos = metrics.countingNanos,
+                    contentColor = contentColor,
+                )
+            }
+            TimeRow(
+                label = stringResource(R.string.normalization_time),
+                nanos = metrics.normalizationNanos,
+                contentColor = contentColor,
+            )
+            TimeRow(
+                label = stringResource(R.string.overhead_time),
+                nanos = metrics.overheadNanos,
+                contentColor = contentColor,
+            )
+            metrics.mergingNanos?.let { mergingNanos ->
+                TimeRow(
+                    label = stringResource(R.string.merge_time),
+                    nanos = mergingNanos,
+                    contentColor = contentColor,
+                )
+            } ?: ValueRow(
+                label = stringResource(R.string.merge_time),
+                value = stringResource(R.string.not_enabled),
+                contentColor = contentColor,
+            )
+            TimeRow(
                 label = stringResource(R.string.calculation_time),
-                nanos = calculationTimeNanos,
+                nanos = metrics.coreTotalNanos,
                 contentColor = contentColor,
             )
             Text(
@@ -94,6 +145,21 @@ fun PerformanceCard(
                 color = contentColor,
             )
         }
+    }
+}
+
+@Composable
+private fun ValueRow(
+    label: String,
+    value: String,
+    contentColor: androidx.compose.ui.graphics.Color,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(label, color = contentColor)
+        Text(value, color = contentColor)
     }
 }
 

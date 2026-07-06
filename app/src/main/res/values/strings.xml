@@ -26,8 +26,17 @@
     <string name="performance_title">生成性能</string>
     <string name="selected_strategy">本次方案</string>
     <string name="decode_time">图片解码</string>
+    <string name="pixel_read_time">Bitmap 批量取像素</string>
+    <string name="grayscale_conversion_time">灰度转换</string>
+    <string name="histogram_counting_time">频次统计</string>
+    <string name="fused_grayscale_counting_time">灰度转换 + 频次统计（融合）</string>
+    <string name="normalization_time">0–100 归一化</string>
+    <string name="overhead_time">其他分配/调度开销</string>
+    <string name="merge_time">多线程结果合并</string>
+    <string name="not_enabled">未启用</string>
+    <string name="not_available">不可用</string>
     <string name="calculation_time">核心计算</string>
     <string name="performance_target_met">已达到核心计算 300ms 目标</string>
     <string name="performance_target_not_met">暂未达到核心计算 300ms 目标</string>
-    <string name="performance_scope">核心计算包含 Bitmap 批量取像素、灰度统计和 0–100 归一化；解码耗时单独展示。</string>
+    <string name="performance_scope">核心计算从 Bitmap 批量取像素开始，到 0–100 归一化完成；分段之和与核心总耗时的差值为数组分配、结果封装和调度开销。解码与 Canvas 绘制不计入核心计算。</string>
 </resources>

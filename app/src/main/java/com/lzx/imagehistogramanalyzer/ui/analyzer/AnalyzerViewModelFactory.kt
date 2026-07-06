@@ -7,6 +7,7 @@ import com.lzx.imagehistogramanalyzer.data.image.BitmapDecoder
 import com.lzx.imagehistogramanalyzer.data.image.BitmapPixelReader
 import com.lzx.imagehistogramanalyzer.data.image.ImageRepository
 import com.lzx.imagehistogramanalyzer.domain.histogram.BaselineHistogramCalculator
+import com.lzx.imagehistogramanalyzer.domain.histogram.MonotonicNanoClock
 import com.lzx.imagehistogramanalyzer.domain.histogram.PreGrayscaleHistogramCalculator
 
 class AnalyzerViewModelFactory(
@@ -17,13 +18,15 @@ class AnalyzerViewModelFactory(
         require(modelClass.isAssignableFrom(AnalyzerViewModel::class.java)) {
             "不支持的 ViewModel 类型：${modelClass.name}"
         }
+        val clock = MonotonicNanoClock
         return AnalyzerViewModel(
             imageRepository = ImageRepository(BitmapDecoder(contentResolver)),
             pixelReader = BitmapPixelReader(),
             histogramCalculators = listOf(
-                PreGrayscaleHistogramCalculator(),
-                BaselineHistogramCalculator(),
+                PreGrayscaleHistogramCalculator(clock = clock),
+                BaselineHistogramCalculator(clock = clock),
             ),
+            clock = clock,
         ) as T
     }
 }

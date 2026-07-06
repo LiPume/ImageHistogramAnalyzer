@@ -9,21 +9,25 @@ import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
  */
 class PreGrayscaleHistogramCalculator(
     private val normalizer: HistogramNormalizer = HistogramNormalizer(),
+    private val clock: NanoClock = MonotonicNanoClock,
 ) : HistogramCalculator {
     override val strategy = HistogramCalculationStrategy.PRE_GRAYSCALE
 
-    override fun calculate(
+    override fun calculateMeasured(
         pixels: IntArray,
         cancellationCheck: () -> Unit,
-    ): HistogramResult {
+    ): MeasuredHistogramResult {
         require(pixels.isNotEmpty()) { "待分析像素不能为空" }
 
+        val grayscaleStart = clock.nowNanos()
         val grayscalePixels = IntArray(pixels.size)
         pixels.forEachIndexed { index, pixel ->
             checkCancellation(index, cancellationCheck)
             grayscalePixels[index] = GrayscaleConverter.fromArgb(pixel)
         }
+        val grayscaleNanos = clock.nowNanos() - grayscaleStart
 
+        val countingStart = clock.nowNanos()
         val counts = IntArray(HistogramResult.GRAY_LEVELS)
         grayscalePixels.forEachIndexed { index, gray ->
             checkCancellation(index, cancellationCheck)
@@ -31,11 +35,25 @@ class PreGrayscaleHistogramCalculator(
         }
 
         val maxCount = counts.maxOrNull() ?: 0
-        return HistogramResult(
+        val countingNanos = clock.nowNanos() - countingStart
+
+        val normalizationStart = clock.nowNanos()
+        val normalizedHeights = normalizer.normalize(counts)
+        val normalizationNanos = clock.nowNanos() - normalizationStart
+
+        val histogram = HistogramResult(
             counts = counts,
-            normalizedHeights = normalizer.normalize(counts),
+            normalizedHeights = normalizedHeights,
             pixelCount = pixels.size.toLong(),
             maxCount = maxCount,
+        )
+        return MeasuredHistogramResult(
+            histogram = histogram,
+            timings = HistogramStageTimings(
+                grayscaleConversionNanos = grayscaleNanos,
+                countingNanos = countingNanos,
+                normalizationNanos = normalizationNanos,
+            ),
         )
     }
 

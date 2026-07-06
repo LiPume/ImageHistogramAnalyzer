@@ -9,15 +9,17 @@ import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
  */
 class BaselineHistogramCalculator(
     private val normalizer: HistogramNormalizer = HistogramNormalizer(),
+    private val clock: NanoClock = MonotonicNanoClock,
 ) : HistogramCalculator {
     override val strategy = HistogramCalculationStrategy.GRAYSCALE_WHILE_COUNTING
 
-    override fun calculate(
+    override fun calculateMeasured(
         pixels: IntArray,
         cancellationCheck: () -> Unit,
-    ): HistogramResult {
+    ): MeasuredHistogramResult {
         require(pixels.isNotEmpty()) { "待分析像素不能为空" }
 
+        val countingStart = clock.nowNanos()
         val counts = IntArray(HistogramResult.GRAY_LEVELS)
         pixels.forEachIndexed { index, pixel ->
             // 大图每处理一块检查一次取消，避免新图片选择后旧任务继续占用 CPU。
@@ -28,11 +30,25 @@ class BaselineHistogramCalculator(
         }
 
         val maxCount = counts.maxOrNull() ?: 0
-        return HistogramResult(
+        val countingNanos = clock.nowNanos() - countingStart
+
+        val normalizationStart = clock.nowNanos()
+        val normalizedHeights = normalizer.normalize(counts)
+        val normalizationNanos = clock.nowNanos() - normalizationStart
+
+        val histogram = HistogramResult(
             counts = counts,
-            normalizedHeights = normalizer.normalize(counts),
+            normalizedHeights = normalizedHeights,
             pixelCount = pixels.size.toLong(),
             maxCount = maxCount,
+        )
+        return MeasuredHistogramResult(
+            histogram = histogram,
+            timings = HistogramStageTimings(
+                grayscaleConversionNanos = null,
+                countingNanos = countingNanos,
+                normalizationNanos = normalizationNanos,
+            ),
         )
     }
 

@@ -1,7 +1,6 @@
 package com.lzx.imagehistogramanalyzer.ui.analyzer
 
 import android.net.Uri
-import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lzx.imagehistogramanalyzer.data.image.BitmapPixelReader
@@ -9,6 +8,9 @@ import com.lzx.imagehistogramanalyzer.data.image.ImageRepository
 import com.lzx.imagehistogramanalyzer.data.image.ImageTooLargeException
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculator
+import com.lzx.imagehistogramanalyzer.domain.histogram.MonotonicNanoClock
+import com.lzx.imagehistogramanalyzer.domain.histogram.NanoClock
+import com.lzx.imagehistogramanalyzer.domain.model.HistogramPerformanceMetrics
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -28,6 +30,7 @@ class AnalyzerViewModel(
     private val pixelReader: BitmapPixelReader,
     histogramCalculators: List<HistogramCalculator>,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val clock: NanoClock = MonotonicNanoClock,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AnalyzerUiState())
     val uiState: StateFlow<AnalyzerUiState> = _uiState.asStateFlow()
@@ -49,9 +52,9 @@ class AnalyzerViewModel(
 
         analysisJob = viewModelScope.launch {
             try {
-                val decodeStart = SystemClock.elapsedRealtimeNanos()
+                val decodeStart = clock.nowNanos()
                 val decodedImage = imageRepository.load(uri)
-                val decodeTime = SystemClock.elapsedRealtimeNanos() - decodeStart
+                val decodeTime = clock.nowNanos() - decodeStart
 
                 if (currentRequestId == requestId) {
                     _uiState.value = AnalyzerUiState(
@@ -78,7 +81,7 @@ class AnalyzerViewModel(
                 current.copy(
                     selectedStrategy = strategy,
                     histogram = null,
-                    calculationTimeNanos = null,
+                    performanceMetrics = null,
                     errorMessage = null,
                 )
             }
@@ -96,21 +99,34 @@ class AnalyzerViewModel(
         _uiState.value = current.copy(
             isProcessing = true,
             histogram = null,
-            calculationTimeNanos = null,
+            performanceMetrics = null,
             errorMessage = null,
         )
 
         analysisJob = viewModelScope.launch {
             try {
                 val computed = withContext(computationDispatcher) {
-                    val calculationStart = SystemClock.elapsedRealtimeNanos()
+                    val calculationStart = clock.nowNanos()
+
+                    val pixelReadStart = clock.nowNanos()
                     val pixels = pixelReader.read(bitmap)
-                    val histogram = calculator.calculate(pixels) {
+                    val pixelReadNanos = clock.nowNanos() - pixelReadStart
+
+                    val measured = calculator.calculateMeasured(pixels) {
                         coroutineContext.ensureActive()
                     }
+                    val coreTotalNanos = clock.nowNanos() - calculationStart
                     ComputedHistogram(
-                        histogram = histogram,
-                        durationNanos = SystemClock.elapsedRealtimeNanos() - calculationStart,
+                        histogram = measured.histogram,
+                        performanceMetrics = HistogramPerformanceMetrics(
+                            pixelReadNanos = pixelReadNanos,
+                            grayscaleConversionNanos =
+                                measured.timings.grayscaleConversionNanos,
+                            countingNanos = measured.timings.countingNanos,
+                            normalizationNanos = measured.timings.normalizationNanos,
+                            mergingNanos = measured.timings.mergingNanos,
+                            coreTotalNanos = coreTotalNanos,
+                        ),
                     )
                 }
 
@@ -119,7 +135,7 @@ class AnalyzerViewModel(
                         it.copy(
                             isProcessing = false,
                             histogram = computed.histogram,
-                            calculationTimeNanos = computed.durationNanos,
+                            performanceMetrics = computed.performanceMetrics,
                         )
                     }
                 }
@@ -155,6 +171,6 @@ class AnalyzerViewModel(
 
     private data class ComputedHistogram(
         val histogram: HistogramResult,
-        val durationNanos: Long,
+        val performanceMetrics: HistogramPerformanceMetrics,
     )
 }

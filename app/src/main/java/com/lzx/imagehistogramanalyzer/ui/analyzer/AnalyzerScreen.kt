@@ -126,13 +126,13 @@ fun AnalyzerScreen(
 
             val strategy = uiState.selectedStrategy
             val decodeTime = uiState.decodeTimeNanos
-            val calculationTime = uiState.calculationTimeNanos
-            if (strategy != null && decodeTime != null && calculationTime != null) {
+            val performanceMetrics = uiState.performanceMetrics
+            if (strategy != null && decodeTime != null && performanceMetrics != null) {
                 item {
                     PerformanceCard(
                         strategy = strategy,
                         decodeTimeNanos = decodeTime,
-                        calculationTimeNanos = calculationTime,
+                        metrics = performanceMetrics,
                     )
                 }
             }
