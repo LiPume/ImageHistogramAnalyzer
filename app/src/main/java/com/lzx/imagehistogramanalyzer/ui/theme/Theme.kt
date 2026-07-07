@@ -8,14 +8,30 @@ import androidx.compose.runtime.Composable
 
 private val LightColors = lightColorScheme(
     primary = IndigoPrimary,
+    primaryContainer = IndigoContainer,
+    onPrimaryContainer = OnIndigoContainer,
     secondary = TealSecondary,
+    secondaryContainer = TealContainer,
+    onSecondaryContainer = OnTealContainer,
+    tertiary = AmberTertiary,
     background = LightBackground,
+    surface = LightBackground,
+    surfaceVariant = LightSurfaceVariant,
+    outline = LightOutline,
 )
 
 private val DarkColors = darkColorScheme(
     primary = IndigoPrimaryDark,
+    primaryContainer = IndigoContainerDark,
+    onPrimaryContainer = OnIndigoContainerDark,
     secondary = TealSecondaryDark,
+    secondaryContainer = TealContainerDark,
+    onSecondaryContainer = OnTealContainerDark,
+    tertiary = AmberTertiaryDark,
     background = DarkBackground,
+    surface = DarkBackground,
+    surfaceVariant = DarkSurfaceVariant,
+    outline = DarkOutline,
 )
 
 @Composable
@@ -25,6 +41,8 @@ fun ImageHistogramAnalyzerTheme(
 ) {
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = AppTypography,
+        shapes = AppShapes,
         content = content,
     )
 }

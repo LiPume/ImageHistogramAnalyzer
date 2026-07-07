@@ -1,17 +1,29 @@
 package com.lzx.imagehistogramanalyzer.ui.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.lzx.imagehistogramanalyzer.R
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
@@ -28,6 +40,7 @@ fun PerformanceCard(
 ) {
     val calculationMillis = metrics.coreTotalNanos / NANOS_PER_MILLISECOND
     val targetMet = calculationMillis < TARGET_MILLIS
+    val budgetRatio = calculationMillis / TARGET_MILLIS
     val containerColor = if (targetMet) {
         MaterialTheme.colorScheme.primaryContainer
     } else {
@@ -51,27 +64,23 @@ fun PerformanceCard(
                 text = stringResource(R.string.performance_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = contentColor,
+                modifier = Modifier.semantics { heading() },
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(stringResource(R.string.selected_strategy), color = contentColor)
-                Text(
-                    text = stringResource(
-                        when (strategy) {
-                            HistogramCalculationStrategy.PRE_GRAYSCALE -> {
-                                R.string.strategy_pre_grayscale
-                            }
+            ValueRow(
+                label = stringResource(R.string.selected_strategy),
+                value = stringResource(
+                    when (strategy) {
+                        HistogramCalculationStrategy.PRE_GRAYSCALE -> {
+                            R.string.strategy_pre_grayscale
+                        }
 
-                            HistogramCalculationStrategy.GRAYSCALE_WHILE_COUNTING -> {
-                                R.string.strategy_while_counting
-                            }
-                        },
-                    ),
-                    color = contentColor,
-                )
-            }
+                        HistogramCalculationStrategy.GRAYSCALE_WHILE_COUNTING -> {
+                            R.string.strategy_while_counting
+                        }
+                    },
+                ),
+                contentColor = contentColor,
+            )
             ValueRow(
                 label = stringResource(R.string.execution_engine),
                 value = stringResource(
@@ -147,6 +156,12 @@ fun PerformanceCard(
                 nanos = metrics.coreTotalNanos,
                 contentColor = contentColor,
             )
+            PerformanceBudgetBar(
+                calculationMillis = calculationMillis,
+                budgetRatio = budgetRatio,
+                targetMet = targetMet,
+                contentColor = contentColor,
+            )
             Text(
                 text = stringResource(
                     if (targetMet) R.string.performance_target_met
@@ -172,26 +187,71 @@ private fun ValueRow(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(label, color = contentColor)
-        Text(value, color = contentColor)
+        Text(
+            text = label,
+            color = contentColor,
+            modifier = Modifier.weight(LABEL_WEIGHT),
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = value,
+            color = contentColor,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(VALUE_WEIGHT),
+        )
     }
 }
 
 @Composable
 private fun TimeRow(label: String, nanos: Long, contentColor: androidx.compose.ui.graphics.Color) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(label, color = contentColor)
-        Text(
-            text = String.format(Locale.US, "%.3f ms", nanos / NANOS_PER_MILLISECOND),
-            color = contentColor,
+    ValueRow(
+        label = label,
+        value = String.format(Locale.US, "%.3f ms", nanos / NANOS_PER_MILLISECOND),
+        contentColor = contentColor,
+    )
+}
+
+@Composable
+private fun PerformanceBudgetBar(
+    calculationMillis: Double,
+    budgetRatio: Double,
+    targetMet: Boolean,
+    contentColor: Color,
+) {
+    val description = stringResource(
+        R.string.performance_budget_accessibility,
+        calculationMillis,
+        budgetRatio * 100.0,
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        ValueRow(
+            label = stringResource(R.string.performance_budget_title),
+            value = stringResource(R.string.performance_budget_value, budgetRatio * 100.0),
+            contentColor = contentColor,
         )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(12.dp)
+                .clip(MaterialTheme.shapes.extraSmall)
+                .background(contentColor.copy(alpha = 0.18f))
+                .semantics { contentDescription = description },
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(budgetRatio.coerceIn(0.0, 1.0).toFloat())
+                    .fillMaxHeight()
+                    .background(
+                        if (targetMet) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.error,
+                    ),
+            )
+        }
     }
 }
 
 private const val NANOS_PER_MILLISECOND = 1_000_000.0
 private const val TARGET_MILLIS = 300.0
+private const val LABEL_WEIGHT = 1.35f
+private const val VALUE_WEIGHT = 1.0f

@@ -1,17 +1,29 @@
 package com.lzx.imagehistogramanalyzer.ui.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.lzx.imagehistogramanalyzer.R
 import com.lzx.imagehistogramanalyzer.domain.model.ImageQualityCategory
@@ -31,12 +43,14 @@ fun QualityAnalysisCard(
             Text(
                 text = stringResource(R.string.quality_title),
                 style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
             )
             QualityValueRow(
                 label = stringResource(R.string.quality_category),
                 value = stringResource(result.category.labelResource),
                 valueColor = MaterialTheme.colorScheme.primary,
             )
+            ToneDistributionBar(result = result)
             QualityValueRow(
                 label = stringResource(R.string.mean_gray),
                 value = String.format(Locale.US, "%.2f", result.meanGray),
@@ -70,10 +84,95 @@ private fun QualityValueRow(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(label)
-        Text(text = value, color = valueColor)
+        Text(text = label, modifier = Modifier.weight(1.35f))
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = value,
+            color = valueColor,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun ToneDistributionBar(result: ImageQualityResult) {
+    val darkRatio = result.darkRatio.coerceIn(0.0, 1.0)
+    val brightRatio = result.brightRatio.coerceIn(0.0, 1.0)
+    val midRatio = (1.0 - darkRatio - brightRatio).coerceIn(0.0, 1.0)
+    val description = stringResource(
+        R.string.tone_distribution_accessibility,
+        darkRatio * 100.0,
+        midRatio * 100.0,
+        brightRatio * 100.0,
+    )
+    val darkColor = MaterialTheme.colorScheme.primary
+    val midColor = MaterialTheme.colorScheme.tertiary
+    val brightColor = MaterialTheme.colorScheme.secondary
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.tone_distribution),
+            style = MaterialTheme.typography.labelLarge,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(16.dp)
+                .clip(MaterialTheme.shapes.small)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .semantics { contentDescription = description },
+        ) {
+            if (darkRatio > 0.0) {
+                Box(
+                    Modifier
+                        .weight(darkRatio.toFloat())
+                        .fillMaxHeight()
+                        .background(darkColor),
+                )
+            }
+            if (midRatio > 0.0) {
+                Box(
+                    Modifier
+                        .weight(midRatio.toFloat())
+                        .fillMaxHeight()
+                        .background(midColor),
+                )
+            }
+            if (brightRatio > 0.0) {
+                Box(
+                    Modifier
+                        .weight(brightRatio.toFloat())
+                        .fillMaxHeight()
+                        .background(brightColor),
+                )
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            ToneLegend(stringResource(R.string.dark_ratio), darkColor)
+            ToneLegend(stringResource(R.string.mid_tone_ratio), midColor)
+            ToneLegend(stringResource(R.string.bright_ratio), brightColor)
+        }
+    }
+}
+
+@Composable
+private fun ToneLegend(label: String, color: Color) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(8.dp)
+                .clip(MaterialTheme.shapes.extraSmall)
+                .background(color),
+        )
+        Text(text = label.substringBefore('（'), style = MaterialTheme.typography.labelMedium)
     }
 }
 

@@ -121,7 +121,7 @@
 
 ## 阶段 2.5：UI 规范与体验优化
 
-- 当前状态：**进行中**
+- 当前状态：**已完成（2026-07-07）**
 - 阶段目标：先研究公开 Android Agent Skills 并沉淀项目规则，再以 Material 3、Compose、可访问性和可测试性为依据优化首页、分析流程、返回路径与结果可视化。
 - 负责人：`lzx`
 
@@ -131,12 +131,19 @@
 - [x] `UI-02`（P0，负责人：`lzx`）已确认项目为单 `:app` 模块、Kotlin + Compose + Material 3 + ViewModel/StateFlow，无 XML 页面、Navigation、Room、Hilt/Koin、Retrofit；修改前 `:app:assembleDebug` 通过，Git 仅有本阶段 TODO 与未跟踪 `test/`。
 - [x] `UI-03`（P0，负责人：`lzx`，依赖：UI-01、02）已更新根目录 `AGENTS.md`，创建 `docs/agent-skill-study.md` 和项目本地 `skills/android-ui-material3/SKILL.md`，明确单模块和课程边界。
 - [x] `UI-04`（P0，负责人：`lzx`，依赖：UI-01、02）已创建 `docs/ui-design-system.md`，定义 light/dark 色彩、排版、间距、圆角、组件、页面状态、信息层级、图表和无障碍规范。
-- [ ] `UI-05`（P0，负责人：`lzx`，依赖：UI-04）修正首屏操作语义：未选图时按钮明确表达“选择图片”，不再用“开始分析”误导用户。
-- [ ] `UI-06`（P0，负责人：`lzx`，依赖：UI-04）完善首页内容，清楚说明选图/拍照、两种直方图方案、质量分析和300ms目标，消除下半屏无信息的空白感。
-- [ ] `UI-07`（P0，负责人：`lzx`，依赖：UI-04）提供明确的“返回首页”路径；保持单 Activity、单 app 模块，不为两页轻流程引入 Navigation 依赖。
-- [ ] `UI-08`（P1，负责人：`lzx`，依赖：UI-04）为性能与质量数据增加最小必要可视化，优先比例条/阶段构成图，保留精确数值和文字结论，不为图表引入第三方库。
-- [ ] `UI-09`（P1，负责人：`lzx`，依赖：UI-05~08）统一 Material 3 主题、卡片、按钮、留白和页面状态；检查 dark mode、edge-to-edge、字体缩放、48dp 点击区、contentDescription 和颜色对比度。
-- [ ] `UI-10`（P0，负责人：`lzx`，依赖：UI-05~09）补充首页、进入分析、返回首页、空/加载/错误/成功状态和图表语义的 Compose 测试，并运行单元测试、仪器测试、Lint 与 Debug 构建。
+- [x] `UI-05`（P0，负责人：`lzx`，依赖：UI-04）首屏和分析页选图按钮均改为真实动作“选择图片/重新选择图片”，不再把打开系统选择器表述为“开始分析”。
+- [x] `UI-06`（P0，负责人：`lzx`，依赖：UI-04）新增可滚动首页，说明本地选图/系统选择器拍照、两种计算流程、质量判断、性能分段和 300ms 口径。
+- [x] `UI-07`（P0，负责人：`lzx`，依赖：UI-04）新增首页/分析页轻量目的地状态、分析页“返回首页”和系统返回处理；回首页后保留已选图并提供“继续查看分析”，未新增 Navigation 依赖。
+- [x] `UI-08`（P1，负责人：`lzx`，依赖：UI-04）质量卡增加暗部/中间调/亮部分布条，性能卡增加 300ms 预算条；保留全部精确数值、文字结论和计时口径，未新增图表依赖。
+- [x] `UI-09`（P1，负责人：`lzx`，依赖：UI-05~08）补齐 light/dark color scheme、Typography、Shapes 和间距 token；API 36.1 模拟器已人工检查 light、dark、1.5× 字体与 edge-to-edge，主要按钮由 M3 保证 48dp，页面标题和图表补齐语义。
+- [x] `UI-10`（P0，负责人：`lzx`，依赖：UI-05~09）新增首页动作/能力说明/继续分析、返回首页和两条图表语义测试；`testDebugUnitTest`、`assembleDebug`、`assembleDebugAndroidTest`、`lintDebug` 均通过，API 36.1 模拟器 12 项通过、1 项显式 benchmark 按设计跳过、0 失败。
+
+### 本阶段产物
+
+- 项目级 Agent/UI 规则：`AGENTS.md`、`skills/android-ui-material3/SKILL.md`。
+- 研究与设计文档：`docs/agent-skill-study.md`、`docs/ui-design-system.md`。
+- 新首页、可返回分析流程、语义一致的选图按钮、质量分布条和 300ms 预算条。
+- light/dark 与 1.5× 字体模拟器截图检查、Compose UI 回归和完整 Debug 构建门禁记录。
 
 ### 验收标准
 

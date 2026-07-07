@@ -42,6 +42,7 @@ class AnalyzerScreenTest {
             ImageHistogramAnalyzerTheme {
                 AnalyzerScreen(
                     uiState = AnalyzerUiState(),
+                    onBackHome = {},
                     onPickImage = { clicked = true },
                     onSelectStrategy = {},
                     onCalculate = {},
@@ -49,7 +50,7 @@ class AnalyzerScreenTest {
             }
         }
 
-        composeRule.onNodeWithText("开始分析")
+        composeRule.onNodeWithText("选择图片")
             .assertIsDisplayed()
             .assertHasClickAction()
             .performClick()
@@ -90,6 +91,7 @@ class AnalyzerScreenTest {
                         ),
                         selectedStrategy = HistogramCalculationStrategy.GRAYSCALE_WHILE_COUNTING,
                     ),
+                    onBackHome = {},
                     onPickImage = {},
                     onSelectStrategy = {},
                     onCalculate = {},
@@ -105,6 +107,9 @@ class AnalyzerScreenTest {
             .assertIsDisplayed()
         composeRule.onNodeWithText("正常").assertIsDisplayed()
         composeRule.onNodeWithText("128.00").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            "暗部 10.0%，中间调 70.0%，亮部 20.0%",
+        ).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(ANALYZER_LIST_TEST_TAG).performScrollToIndex(4)
         composeRule.onNodeWithText("已达到核心计算 300ms 目标")
             .performScrollTo()
@@ -118,6 +123,9 @@ class AnalyzerScreenTest {
             .assertIsDisplayed()
         composeRule.onNodeWithText("灰度转换 + 频次统计（融合）").assertIsDisplayed()
         composeRule.onNodeWithText("多线程结果合并").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            "核心计算 10.000 毫秒，占 300 毫秒性能预算的 3.3%",
+        ).performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -140,6 +148,7 @@ class AnalyzerScreenTest {
             ImageHistogramAnalyzerTheme {
                 AnalyzerScreen(
                     uiState = uiState,
+                    onBackHome = {},
                     onPickImage = {},
                     onSelectStrategy = { strategy ->
                         uiState = uiState.copy(selectedStrategy = strategy)
@@ -186,5 +195,28 @@ class AnalyzerScreenTest {
         composeRule.onNodeWithText("频次统计").assertIsDisplayed()
         composeRule.onNodeWithText("其他分配/调度开销").assertIsDisplayed()
         composeRule.onNodeWithText("核心计算").assertIsDisplayed()
+    }
+
+    @Test
+    fun analyzerTopBar_returnsHome() {
+        var returnedHome = false
+        composeRule.setContent {
+            ImageHistogramAnalyzerTheme {
+                AnalyzerScreen(
+                    uiState = AnalyzerUiState(),
+                    onBackHome = { returnedHome = true },
+                    onPickImage = {},
+                    onSelectStrategy = {},
+                    onCalculate = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("返回首页")
+            .assertIsDisplayed()
+            .assertHasClickAction()
+            .performClick()
+
+        assertTrue(returnedHome)
     }
 }
