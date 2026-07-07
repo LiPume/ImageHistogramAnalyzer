@@ -2,7 +2,7 @@
     <string name="app_name">图像直方图分析</string>
     <string name="app_intro">先选择本地图片，再选择“优先灰度化”或“统计时灰度化”，最后计算并绘制 256×100 黑白直方图。</string>
     <string name="pick_image_title">选择分析图片</string>
-    <string name="pick_image_description">通过系统图片选择器读取图片，不需要申请相册存储权限。MVP 单张图片上限为 1600 万像素。</string>
+    <string name="pick_image_description">通过系统图片选择器读取图片，不需要相册存储权限；支持的手机可在选择器中直接拍照。单张图片上限为 1600 万像素。</string>
     <string name="select_image">开始分析</string>
     <string name="replace_image">重新选择并分析</string>
     <string name="processing_image">正在读取图片或计算直方图…</string>
@@ -43,4 +43,15 @@
     <string name="performance_target_met">已达到核心计算 300ms 目标</string>
     <string name="performance_target_not_met">暂未达到核心计算 300ms 目标</string>
     <string name="performance_scope">Kotlin v2 的像素访问包含 Bitmap.getPixels 整图复制；Native v3 直接锁定 Bitmap，不创建 Java 彩色像素数组。核心计算到 0–100 归一化完成；解码与 Canvas 绘制不计入。</string>
+    <string name="quality_title">图像质量分析</string>
+    <string name="quality_category">质量判断</string>
+    <string name="mean_gray">平均灰度</string>
+    <string name="dark_ratio">暗部占比（0–63）</string>
+    <string name="bright_ratio">亮部占比（192–255）</string>
+    <string name="gray_standard_deviation">灰度标准差</string>
+    <string name="quality_dark">偏暗</string>
+    <string name="quality_bright">偏亮</string>
+    <string name="quality_low_contrast">低对比度</string>
+    <string name="quality_normal">正常</string>
+    <string name="quality_scope">质量指标由已生成的 256 个灰度频次计算，不会再次扫描图片，也不计入直方图核心耗时。</string>
 </resources>

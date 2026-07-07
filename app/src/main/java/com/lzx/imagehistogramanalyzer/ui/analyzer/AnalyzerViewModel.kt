@@ -13,6 +13,8 @@ import com.lzx.imagehistogramanalyzer.domain.histogram.MonotonicNanoClock
 import com.lzx.imagehistogramanalyzer.domain.histogram.NanoClock
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramPerformanceMetrics
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
+import com.lzx.imagehistogramanalyzer.domain.model.ImageQualityResult
+import com.lzx.imagehistogramanalyzer.domain.quality.ImageQualityAnalyzer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,7 @@ class AnalyzerViewModel(
     private val pixelReader: BitmapPixelReader,
     histogramCalculators: List<HistogramCalculator>,
     private val nativeCalculator: NativeBitmapHistogramCalculator? = null,
+    private val qualityAnalyzer: ImageQualityAnalyzer = ImageQualityAnalyzer(),
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val clock: NanoClock = MonotonicNanoClock,
 ) : ViewModel() {
@@ -83,6 +86,7 @@ class AnalyzerViewModel(
                 current.copy(
                     selectedStrategy = strategy,
                     histogram = null,
+                    qualityResult = null,
                     performanceMetrics = null,
                     errorMessage = null,
                 )
@@ -116,6 +120,7 @@ class AnalyzerViewModel(
                         ComputedHistogram(
                             histogram = result.histogram,
                             performanceMetrics = result.metrics,
+                            qualityResult = qualityAnalyzer.analyze(result.histogram),
                         )
                     } else {
                         calculateWithKotlin(bitmap, calculator)
@@ -127,6 +132,7 @@ class AnalyzerViewModel(
                         it.copy(
                             isProcessing = false,
                             histogram = computed.histogram,
+                            qualityResult = computed.qualityResult,
                             performanceMetrics = computed.performanceMetrics,
                         )
                     }
@@ -176,6 +182,7 @@ class AnalyzerViewModel(
         val coreTotalNanos = clock.nowNanos() - calculationStart
         return ComputedHistogram(
             histogram = measured.histogram,
+            qualityResult = qualityAnalyzer.analyze(measured.histogram),
             performanceMetrics = HistogramPerformanceMetrics(
                 pixelReadNanos = pixelReadNanos,
                 grayscaleConversionNanos = measured.timings.grayscaleConversionNanos,
@@ -189,6 +196,7 @@ class AnalyzerViewModel(
 
     private data class ComputedHistogram(
         val histogram: HistogramResult,
+        val qualityResult: ImageQualityResult,
         val performanceMetrics: HistogramPerformanceMetrics,
     )
 }

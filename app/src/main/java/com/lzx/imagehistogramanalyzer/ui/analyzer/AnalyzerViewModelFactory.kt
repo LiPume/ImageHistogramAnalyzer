@@ -10,6 +10,7 @@ import com.lzx.imagehistogramanalyzer.data.image.NativeBitmapHistogramCalculator
 import com.lzx.imagehistogramanalyzer.domain.histogram.BaselineHistogramCalculator
 import com.lzx.imagehistogramanalyzer.domain.histogram.MonotonicNanoClock
 import com.lzx.imagehistogramanalyzer.domain.histogram.PreGrayscaleHistogramCalculator
+import com.lzx.imagehistogramanalyzer.domain.quality.ImageQualityAnalyzer
 
 class AnalyzerViewModelFactory(
     private val contentResolver: ContentResolver,
@@ -28,6 +29,7 @@ class AnalyzerViewModelFactory(
                 BaselineHistogramCalculator(clock = clock),
             ),
             nativeCalculator = NativeBitmapHistogramCalculator(clock = clock),
+            qualityAnalyzer = ImageQualityAnalyzer(),
             clock = clock,
         ) as T
     }

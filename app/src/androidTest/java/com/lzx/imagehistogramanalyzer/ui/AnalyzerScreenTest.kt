@@ -10,15 +10,20 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramExecutionEngine
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramPerformanceMetrics
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
 import com.lzx.imagehistogramanalyzer.domain.model.ImageMetadata
+import com.lzx.imagehistogramanalyzer.domain.model.ImageQualityCategory
+import com.lzx.imagehistogramanalyzer.domain.model.ImageQualityResult
 import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerScreen
+import com.lzx.imagehistogramanalyzer.ui.analyzer.ANALYZER_LIST_TEST_TAG
 import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerUiState
 import com.lzx.imagehistogramanalyzer.ui.component.PerformanceCard
 import com.lzx.imagehistogramanalyzer.ui.theme.ImageHistogramAnalyzerTheme
@@ -66,6 +71,13 @@ class AnalyzerScreenTest {
                             pixelCount = 10,
                             maxCount = 10,
                         ),
+                        qualityResult = ImageQualityResult(
+                            meanGray = 128.0,
+                            darkRatio = 0.1,
+                            brightRatio = 0.2,
+                            standardDeviation = 42.0,
+                            category = ImageQualityCategory.NORMAL,
+                        ),
                         decodeTimeNanos = 2_000_000,
                         performanceMetrics = HistogramPerformanceMetrics(
                             pixelReadNanos = 1_000_000,
@@ -88,6 +100,12 @@ class AnalyzerScreenTest {
         composeRule.onNodeWithText("灰度直方图").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithContentDescription("256 个灰度等级的黑白直方图")
             .assertIsDisplayed()
+        composeRule.onNodeWithText("图像质量分析")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("正常").assertIsDisplayed()
+        composeRule.onNodeWithText("128.00").assertIsDisplayed()
+        composeRule.onNodeWithTag(ANALYZER_LIST_TEST_TAG).performScrollToIndex(4)
         composeRule.onNodeWithText("已达到核心计算 300ms 目标")
             .performScrollTo()
             .assertIsDisplayed()

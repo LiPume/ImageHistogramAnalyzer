@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.lzx.imagehistogramanalyzer.R
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
@@ -26,6 +27,7 @@ import com.lzx.imagehistogramanalyzer.ui.component.HistogramCard
 import com.lzx.imagehistogramanalyzer.ui.component.ImagePickerCard
 import com.lzx.imagehistogramanalyzer.ui.component.ImagePreviewCard
 import com.lzx.imagehistogramanalyzer.ui.component.PerformanceCard
+import com.lzx.imagehistogramanalyzer.ui.component.QualityAnalysisCard
 import com.lzx.imagehistogramanalyzer.ui.component.StrategySelectionCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,6 +49,7 @@ fun AnalyzerScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .testTag(ANALYZER_LIST_TEST_TAG)
                 .padding(innerPadding),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -124,6 +127,12 @@ fun AnalyzerScreen(
                 }
             }
 
+            uiState.qualityResult?.let { qualityResult ->
+                item {
+                    QualityAnalysisCard(result = qualityResult)
+                }
+            }
+
             val strategy = uiState.selectedStrategy
             val decodeTime = uiState.decodeTimeNanos
             val performanceMetrics = uiState.performanceMetrics
@@ -139,3 +148,5 @@ fun AnalyzerScreen(
         }
     }
 }
+
+const val ANALYZER_LIST_TEST_TAG = "analyzer_list"
