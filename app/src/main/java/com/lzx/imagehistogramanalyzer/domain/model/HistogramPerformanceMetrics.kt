@@ -12,6 +12,8 @@ data class HistogramPerformanceMetrics(
     val normalizationNanos: Long,
     val mergingNanos: Long? = null,
     val coreTotalNanos: Long,
+    val executionEngine: HistogramExecutionEngine = HistogramExecutionEngine.KOTLIN_V2,
+    val workerCount: Int = 1,
 ) {
     init {
         require(pixelReadNanos >= 0)
@@ -20,6 +22,7 @@ data class HistogramPerformanceMetrics(
         require(normalizationNanos >= 0)
         require(mergingNanos == null || mergingNanos >= 0)
         require(coreTotalNanos >= 0)
+        require(workerCount > 0)
     }
 
     /** 核心总耗时中未被显式阶段覆盖的数组分配、结果封装和调度时间。 */

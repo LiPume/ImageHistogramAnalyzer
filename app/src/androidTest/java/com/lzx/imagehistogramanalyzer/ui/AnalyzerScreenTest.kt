@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
+import com.lzx.imagehistogramanalyzer.domain.model.HistogramExecutionEngine
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramPerformanceMetrics
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
 import com.lzx.imagehistogramanalyzer.domain.model.ImageMetadata
@@ -72,6 +73,8 @@ class AnalyzerScreenTest {
                             countingNanos = 7_000_000,
                             normalizationNanos = 1_000_000,
                             coreTotalNanos = 10_000_000,
+                            executionEngine = HistogramExecutionEngine.NATIVE_V3,
+                            workerCount = 8,
                         ),
                         selectedStrategy = HistogramCalculationStrategy.GRAYSCALE_WHILE_COUNTING,
                     ),
@@ -88,7 +91,13 @@ class AnalyzerScreenTest {
         composeRule.onNodeWithText("已达到核心计算 300ms 目标")
             .performScrollTo()
             .assertIsDisplayed()
-        composeRule.onNodeWithText("Bitmap 批量取像素").assertIsDisplayed()
+        composeRule.onNodeWithText("像素访问/复制").assertIsDisplayed()
+        composeRule.onNodeWithText("Native 多线程 v3.0")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("8")
+            .performScrollTo()
+            .assertIsDisplayed()
         composeRule.onNodeWithText("灰度转换 + 频次统计（融合）").assertIsDisplayed()
         composeRule.onNodeWithText("多线程结果合并").assertIsDisplayed()
     }
@@ -154,7 +163,7 @@ class AnalyzerScreenTest {
             }
         }
 
-        composeRule.onNodeWithText("Bitmap 批量取像素").assertIsDisplayed()
+        composeRule.onNodeWithText("像素访问/复制").assertIsDisplayed()
         composeRule.onNodeWithText("灰度转换").assertIsDisplayed()
         composeRule.onNodeWithText("频次统计").assertIsDisplayed()
         composeRule.onNodeWithText("其他分配/调度开销").assertIsDisplayed()

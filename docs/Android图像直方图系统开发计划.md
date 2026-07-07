@@ -161,6 +161,10 @@ ImageHistogramAnalyzer/
 │       │   │           ├── Color.kt
 │       │   │           ├── Theme.kt
 │       │   │           └── Type.kt
+│       │   ├── jni/                              # v3 性能主路径
+│       │   │   ├── Android.mk
+│       │   │   ├── Application.mk
+│       │   │   └── histogram_native.cpp
 │       │   └── res/
 │       │       ├── values/strings.xml
 │       │       └── values/themes.xml
@@ -179,6 +183,7 @@ ImageHistogramAnalyzer/
 │   ├── 需求规格说明书.md
 │   ├── 概要设计.md
 │   ├── 测试计划与测试报告.md
+│   ├── 性能优化数据表.md
 │   └── 使用说明.md
 ├── gradle/libs.versions.toml
 ├── build.gradle.kts
@@ -294,6 +299,7 @@ ImageHistogramAnalyzer/
 ### 需要修改的现有文件
 
 - `app/build.gradle.kts`：启用 Compose；配置 Kotlin/JVM 编译选项；加入 Activity Compose、Compose BOM、Material 3、Lifecycle ViewModel、Compose Tooling/Test、协程等依赖；按需要增加 Release 配置。
+- v3 优化阶段同时固定 NDK 版本并配置 `externalNativeBuild/ndkBuild`；Native 不可用时必须保留 Kotlin 回退。
 - `gradle/libs.versions.toml`：集中声明 Compose、Lifecycle、Activity、Coroutines、Benchmark 等版本和别名；移除后续不再使用的传统 AppCompat/Material 依赖。
 - `app/src/main/AndroidManifest.xml`：注册导出的 Launcher `MainActivity`；不添加不必要的存储权限。
 - `app/src/main/res/values/themes.xml` 和 `values-night/themes.xml`：切换为适配 Compose 的无 ActionBar 容器主题。
@@ -363,4 +369,3 @@ ImageHistogramAnalyzer/
 2. 先用纯 Kotlin/Android Bitmap 单元测试确定算法语义，再接图片选择和 UI。
 3. 先完成正确的基础链路，再实现优化算法；每次优化都跑一致性测试。
 4. 最后做真机性能、内存和文档验收，不用模拟器数据替代最终 300ms 结论。
-

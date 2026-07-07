@@ -5,6 +5,7 @@ plugins {
 
 android {
     namespace = "com.lzx.imagehistogramanalyzer"
+    ndkVersion = "28.2.13676358"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -15,10 +16,16 @@ android {
         applicationId = "com.lzx.imagehistogramanalyzer"
         minSdk = 23
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        externalNativeBuild {
+            ndkBuild {
+                arguments += "NDK_APPLICATION_MK:=src/main/jni/Application.mk"
+            }
+        }
     }
 
     buildTypes {
@@ -36,6 +43,11 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    externalNativeBuild {
+        ndkBuild {
+            path = file("src/main/jni/Android.mk")
+        }
     }
 }
 

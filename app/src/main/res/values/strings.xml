@@ -25,8 +25,12 @@
     <string name="calculate_histogram">计算并绘制直方图</string>
     <string name="performance_title">生成性能</string>
     <string name="selected_strategy">本次方案</string>
+    <string name="execution_engine">执行引擎</string>
+    <string name="engine_kotlin_v2">Kotlin 单线程 v2.0</string>
+    <string name="engine_native_v3">Native 多线程 v3.0</string>
+    <string name="worker_count">工作线程</string>
     <string name="decode_time">图片解码</string>
-    <string name="pixel_read_time">Bitmap 批量取像素</string>
+    <string name="pixel_access_time">像素访问/复制</string>
     <string name="grayscale_conversion_time">灰度转换</string>
     <string name="histogram_counting_time">频次统计</string>
     <string name="fused_grayscale_counting_time">灰度转换 + 频次统计（融合）</string>
@@ -38,5 +42,5 @@
     <string name="calculation_time">核心计算</string>
     <string name="performance_target_met">已达到核心计算 300ms 目标</string>
     <string name="performance_target_not_met">暂未达到核心计算 300ms 目标</string>
-    <string name="performance_scope">核心计算从 Bitmap 批量取像素开始，到 0–100 归一化完成；分段之和与核心总耗时的差值为数组分配、结果封装和调度开销。解码与 Canvas 绘制不计入核心计算。</string>
+    <string name="performance_scope">Kotlin v2 的像素访问包含 Bitmap.getPixels 整图复制；Native v3 直接锁定 Bitmap，不创建 Java 彩色像素数组。核心计算到 0–100 归一化完成；解码与 Canvas 绘制不计入。</string>
 </resources>

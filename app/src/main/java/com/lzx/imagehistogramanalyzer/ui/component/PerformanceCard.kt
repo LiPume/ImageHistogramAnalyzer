@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lzx.imagehistogramanalyzer.R
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
+import com.lzx.imagehistogramanalyzer.domain.model.HistogramExecutionEngine
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramPerformanceMetrics
 import java.util.Locale
 
@@ -71,13 +72,28 @@ fun PerformanceCard(
                     color = contentColor,
                 )
             }
+            ValueRow(
+                label = stringResource(R.string.execution_engine),
+                value = stringResource(
+                    when (metrics.executionEngine) {
+                        HistogramExecutionEngine.KOTLIN_V2 -> R.string.engine_kotlin_v2
+                        HistogramExecutionEngine.NATIVE_V3 -> R.string.engine_native_v3
+                    },
+                ),
+                contentColor = contentColor,
+            )
+            ValueRow(
+                label = stringResource(R.string.worker_count),
+                value = metrics.workerCount.toString(),
+                contentColor = contentColor,
+            )
             TimeRow(
                 label = stringResource(R.string.decode_time),
                 nanos = decodeTimeNanos,
                 contentColor = contentColor,
             )
             TimeRow(
-                label = stringResource(R.string.pixel_read_time),
+                label = stringResource(R.string.pixel_access_time),
                 nanos = metrics.pixelReadNanos,
                 contentColor = contentColor,
             )

@@ -7,7 +7,8 @@
 - 阶段：阶段 3——性能优化进行中；阶段 1 功能 MVP 已完成真机部署与主流程验证。
 - App 已完成 Compose 启动页、系统选图、图片预览、分辨率/像素信息、两种灰度统计方案、256×100 Canvas 直方图和耗时展示。
 - 页面支持完整纵向滚动；选图后不会自动计算，需要选择“优先灰度化”或“统计时灰度化”，再点击“计算并绘制直方图”。
-- 单元测试、Compose 仪器测试、Lint、Debug 构建和 API 36 模拟器主流程已通过。Xiaomi 14 v2.0 复测显示单线程优化将 12.58MP 核心耗时降至 674–776ms，但 `Bitmap.getPixels()` 仍占约 70%–74%；下一步优先建立多轮基准并消除整图 Java 像素数组复制，再评估多线程与 NDK/NEON。
+- v3.0 已加入 NDK/C++ Native 主引擎：直接锁定 Bitmap，取消 Java 整图彩色像素复制；两方案按行分块、线程私有 256-bin 后归并，并保留 Kotlin v2 回退。性能卡片会显示执行引擎和线程数。
+- JVM 测试、四 ABI Native 构建、Lint、常规仪器测试和 API 36 模拟器多轮基准已通过。12.58MP 模拟器夹具中，v3 两方案核心中位数为 30.885ms / 15.067ms，相对 v2 为 3.11× / 4.28×；模拟器只有 1 vCPU，真机八核收益和 300ms 正式结论仍需 Xiaomi 14 v3.0 多轮验证。
 
 本地五张真实测试图片放在 `test_pic/`（含人物，不上传公开仓库）。安装到指定模拟器：
 
@@ -21,6 +22,7 @@ ANDROID_SERIAL=emulator-5554 ./scripts/install_test_images.sh
 - `docs/迭代计划与TODO.md`
 - `docs/协作规范.md`
 - `docs/开源项目技术借鉴记录.md`
+- `docs/性能优化数据表.md`
 
 ## 项目专用 Agent Skill
 
@@ -74,3 +76,9 @@ git status --short
 ```
 
 提交前确认没有纳入 `build/`、`.gradle/`、`local.properties` 或 `references/open_source/`。
+
+显式运行模拟器性能基准：
+
+```bash
+ANDROID_SERIAL=emulator-5554 ./scripts/run_emulator_benchmark.sh
+```

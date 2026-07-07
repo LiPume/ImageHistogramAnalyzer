@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.lzx.imagehistogramanalyzer.data.image.BitmapPixelReader
 import com.lzx.imagehistogramanalyzer.data.image.ImageRepository
 import com.lzx.imagehistogramanalyzer.data.image.ImageTooLargeException
+import com.lzx.imagehistogramanalyzer.data.image.NativeBitmapHistogramCalculator
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculator
 import com.lzx.imagehistogramanalyzer.domain.histogram.MonotonicNanoClock
@@ -29,6 +30,7 @@ class AnalyzerViewModel(
     private val imageRepository: ImageRepository,
     private val pixelReader: BitmapPixelReader,
     histogramCalculators: List<HistogramCalculator>,
+    private val nativeCalculator: NativeBitmapHistogramCalculator? = null,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val clock: NanoClock = MonotonicNanoClock,
 ) : ViewModel() {
@@ -106,28 +108,18 @@ class AnalyzerViewModel(
         analysisJob = viewModelScope.launch {
             try {
                 val computed = withContext(computationDispatcher) {
-                    val calculationStart = clock.nowNanos()
-
-                    val pixelReadStart = clock.nowNanos()
-                    val pixels = pixelReader.read(bitmap)
-                    val pixelReadNanos = clock.nowNanos() - pixelReadStart
-
-                    val measured = calculator.calculateMeasured(pixels) {
+                    coroutineContext.ensureActive()
+                    val native = nativeCalculator
+                    if (native != null && native.isAvailable) {
+                        val result = native.calculate(bitmap, strategy)
                         coroutineContext.ensureActive()
+                        ComputedHistogram(
+                            histogram = result.histogram,
+                            performanceMetrics = result.metrics,
+                        )
+                    } else {
+                        calculateWithKotlin(bitmap, calculator)
                     }
-                    val coreTotalNanos = clock.nowNanos() - calculationStart
-                    ComputedHistogram(
-                        histogram = measured.histogram,
-                        performanceMetrics = HistogramPerformanceMetrics(
-                            pixelReadNanos = pixelReadNanos,
-                            grayscaleConversionNanos =
-                                measured.timings.grayscaleConversionNanos,
-                            countingNanos = measured.timings.countingNanos,
-                            normalizationNanos = measured.timings.normalizationNanos,
-                            mergingNanos = measured.timings.mergingNanos,
-                            coreTotalNanos = coreTotalNanos,
-                        ),
-                    )
                 }
 
                 if (currentRequestId == requestId) {
@@ -167,6 +159,32 @@ class AnalyzerViewModel(
         is SecurityException -> "没有读取该图片的权限，请重新选择"
         is IllegalArgumentException -> message ?: "所选文件不是有效图片"
         else -> "图片处理失败，请重新选择"
+    }
+
+    private suspend fun calculateWithKotlin(
+        bitmap: android.graphics.Bitmap,
+        calculator: HistogramCalculator,
+    ): ComputedHistogram {
+        val calculationStart = clock.nowNanos()
+
+        val pixelReadStart = clock.nowNanos()
+        val pixels = pixelReader.read(bitmap)
+        val pixelReadNanos = clock.nowNanos() - pixelReadStart
+
+        val activeContext = coroutineContext
+        val measured = calculator.calculateMeasured(pixels) { activeContext.ensureActive() }
+        val coreTotalNanos = clock.nowNanos() - calculationStart
+        return ComputedHistogram(
+            histogram = measured.histogram,
+            performanceMetrics = HistogramPerformanceMetrics(
+                pixelReadNanos = pixelReadNanos,
+                grayscaleConversionNanos = measured.timings.grayscaleConversionNanos,
+                countingNanos = measured.timings.countingNanos,
+                normalizationNanos = measured.timings.normalizationNanos,
+                mergingNanos = measured.timings.mergingNanos,
+                coreTotalNanos = coreTotalNanos,
+            ),
+        )
     }
 
     private data class ComputedHistogram(

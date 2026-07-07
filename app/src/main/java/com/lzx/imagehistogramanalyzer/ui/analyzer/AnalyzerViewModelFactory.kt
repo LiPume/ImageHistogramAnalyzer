@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.lzx.imagehistogramanalyzer.data.image.BitmapDecoder
 import com.lzx.imagehistogramanalyzer.data.image.BitmapPixelReader
 import com.lzx.imagehistogramanalyzer.data.image.ImageRepository
+import com.lzx.imagehistogramanalyzer.data.image.NativeBitmapHistogramCalculator
 import com.lzx.imagehistogramanalyzer.domain.histogram.BaselineHistogramCalculator
 import com.lzx.imagehistogramanalyzer.domain.histogram.MonotonicNanoClock
 import com.lzx.imagehistogramanalyzer.domain.histogram.PreGrayscaleHistogramCalculator
@@ -26,6 +27,7 @@ class AnalyzerViewModelFactory(
                 PreGrayscaleHistogramCalculator(clock = clock),
                 BaselineHistogramCalculator(clock = clock),
             ),
+            nativeCalculator = NativeBitmapHistogramCalculator(clock = clock),
             clock = clock,
         ) as T
     }
