@@ -21,6 +21,7 @@ ANDROID_SERIAL=emulator-5554 ./scripts/install_test_images.sh
 详细计划见：
 
 - `docs/final/README.md`（最终交付文档总入口）
+- `docs/final/ImageHistogramAnalyzer-课堂验收汇报.pptx`（11 页课堂验收 PPT）
 - `docs/Android图像直方图系统开发计划.md`
 - `docs/迭代计划与TODO.md`
 - `docs/协作规范.md`

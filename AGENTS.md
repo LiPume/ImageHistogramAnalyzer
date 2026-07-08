@@ -14,6 +14,7 @@ Supporting workflow skills:
 - `.github/skills/android-test-gate/SKILL.md`: require proportional tests after each meaningful code slice.
 - `.github/skills/project-doc-sync/SKILL.md`: synchronize TODO, design, testing, and usage documents from evidence.
 - `.github/skills/project-git-checkpoint/SKILL.md`: create safe, tested, authorized Git checkpoints at logical boundaries.
+- `.github/skills/course-presentation/SKILL.md`: create and verify the project classroom acceptance PPTX from traceable code, test, document, and screenshot evidence.
 
 Before editing:
 

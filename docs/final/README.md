@@ -2,6 +2,8 @@
 
 本目录是课程提交与答辩使用的最终文档集。现有 `docs/` 根目录文件保留开发过程、调研和原始测试证据；最终提交时优先从本页进入，不需要在多个历史文档中寻找结论。
 
+课堂验收演示稿：[ImageHistogramAnalyzer-课堂验收汇报.pptx](ImageHistogramAnalyzer-课堂验收汇报.pptx)，共 11 页，按 5–8 分钟汇报设计。固定 L1 的最终数据尚未产生，PPT 中保留 `[待真机填写]`。
+
 ## 一、最终文档清单
 
 | 编号 | 文档 | 用途 | 当前状态 |
@@ -32,6 +34,7 @@
 | 团队协作 | [协作规范](../协作规范.md) |
 | Agent Skill 调研 | [Agent Skill Study](../agent-skill-study.md) |
 | 开源借鉴边界 | [开源项目技术借鉴记录](../开源项目技术借鉴记录.md) |
+| 课堂汇报规范 | [course-presentation Skill](../../.github/skills/course-presentation/SKILL.md) |
 
 ## 三、封版规则
 

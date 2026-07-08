@@ -1,0 +1,4 @@
+interface:
+  display_name: "课程验收 PPT"
+  short_description: "生成并验收本项目高质量课堂汇报 PowerPoint"
+  default_prompt: "Use $course-presentation to create a concise classroom acceptance deck for ImageHistogramAnalyzer."
