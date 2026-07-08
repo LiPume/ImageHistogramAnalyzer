@@ -22,7 +22,7 @@ class AnalyzerViewModelFactory(
         }
         val clock = MonotonicNanoClock
         return AnalyzerViewModel(
-            imageRepository = ImageRepository(BitmapDecoder(contentResolver)),
+            imageLoader = ImageRepository(BitmapDecoder(contentResolver)),
             pixelReader = BitmapPixelReader(),
             histogramCalculators = listOf(
                 PreGrayscaleHistogramCalculator(clock = clock),

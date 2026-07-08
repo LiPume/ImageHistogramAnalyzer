@@ -4,9 +4,12 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lzx.imagehistogramanalyzer.data.image.BitmapPixelReader
-import com.lzx.imagehistogramanalyzer.data.image.ImageRepository
+import com.lzx.imagehistogramanalyzer.data.image.ImageDecodeException
+import com.lzx.imagehistogramanalyzer.data.image.ImageLoader
+import com.lzx.imagehistogramanalyzer.data.image.ImageOpenException
 import com.lzx.imagehistogramanalyzer.data.image.ImageTooLargeException
 import com.lzx.imagehistogramanalyzer.data.image.NativeBitmapHistogramCalculator
+import com.lzx.imagehistogramanalyzer.data.image.UnsupportedImageTypeException
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculator
 import com.lzx.imagehistogramanalyzer.domain.histogram.MonotonicNanoClock
@@ -29,7 +32,7 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
 
 class AnalyzerViewModel(
-    private val imageRepository: ImageRepository,
+    private val imageLoader: ImageLoader,
     private val pixelReader: BitmapPixelReader,
     histogramCalculators: List<HistogramCalculator>,
     private val nativeCalculator: NativeBitmapHistogramCalculator? = null,
@@ -53,12 +56,16 @@ class AnalyzerViewModel(
     fun selectImage(uri: Uri) {
         analysisJob?.cancel()
         val currentRequestId = ++requestId
-        _uiState.value = AnalyzerUiState(isProcessing = true)
+        val previousState = _uiState.value
+        _uiState.value = previousState.copy(
+            isProcessing = true,
+            errorMessage = null,
+        )
 
         analysisJob = viewModelScope.launch {
             try {
                 val decodeStart = clock.nowNanos()
-                val decodedImage = imageRepository.load(uri)
+                val decodedImage = imageLoader.load(uri)
                 val decodeTime = clock.nowNanos() - decodeStart
 
                 if (currentRequestId == requestId) {
@@ -72,7 +79,10 @@ class AnalyzerViewModel(
                 throw cancellation
             } catch (error: Exception) {
                 if (currentRequestId == requestId) {
-                    _uiState.value = AnalyzerUiState(errorMessage = error.toUserMessage())
+                    _uiState.value = previousState.copy(
+                        isProcessing = false,
+                        errorMessage = error.toUserMessage(),
+                    )
                 }
             }
         }
@@ -152,21 +162,6 @@ class AnalyzerViewModel(
         }
     }
 
-    private fun Exception.toUserMessage(): String = when (this) {
-        is ImageTooLargeException -> {
-            val megapixels = pixelCount / 1_000_000.0
-            val maxMegapixels = maxPixelCount / 1_000_000
-            "图片约 %.1f 百万像素，超过 MVP 的 %d 百万像素安全上限".format(
-                megapixels,
-                maxMegapixels,
-            )
-        }
-
-        is SecurityException -> "没有读取该图片的权限，请重新选择"
-        is IllegalArgumentException -> message ?: "所选文件不是有效图片"
-        else -> "图片处理失败，请重新选择"
-    }
-
     private suspend fun calculateWithKotlin(
         bitmap: android.graphics.Bitmap,
         calculator: HistogramCalculator,
@@ -199,4 +194,22 @@ class AnalyzerViewModel(
         val qualityResult: ImageQualityResult,
         val performanceMetrics: HistogramPerformanceMetrics,
     )
+}
+
+internal fun Exception.toUserMessage(): String = when (this) {
+    is ImageTooLargeException -> {
+        val megapixels = pixelCount / 1_000_000.0
+        val maxMegapixels = maxPixelCount / 1_000_000
+        "图片约 %.1f 百万像素，超过 MVP 的 %d 百万像素安全上限".format(
+            megapixels,
+            maxMegapixels,
+        )
+    }
+
+    is ImageOpenException -> "无法打开所选图片，请重新选择"
+    is ImageDecodeException -> "图片文件可能已损坏或格式不受支持，请重新选择"
+    is UnsupportedImageTypeException -> "不支持的文件类型：$mimeType，请选择 JPG、PNG 或 WebP"
+    is SecurityException -> "没有读取该图片的权限，请重新选择"
+    is IllegalArgumentException -> message ?: "所选文件不是有效图片"
+    else -> "图片处理失败，请重新选择"
 }

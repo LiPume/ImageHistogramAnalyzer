@@ -32,6 +32,24 @@ class ImageQualityAnalyzerTest {
     }
 
     @Test
+    fun darkMeanFixture_isDarkWithoutDominantDarkBins() {
+        val result = analyzer.analyze(histogramOf(80 to 100))
+
+        assertEquals(80.0, result.meanGray, TOLERANCE)
+        assertEquals(0.0, result.darkRatio, TOLERANCE)
+        assertEquals(ImageQualityCategory.DARK, result.category)
+    }
+
+    @Test
+    fun brightMeanFixture_isBrightWithoutDominantBrightBins() {
+        val result = analyzer.analyze(histogramOf(180 to 100))
+
+        assertEquals(180.0, result.meanGray, TOLERANCE)
+        assertEquals(0.0, result.brightRatio, TOLERANCE)
+        assertEquals(ImageQualityCategory.BRIGHT, result.category)
+    }
+
+    @Test
     fun uniformMiddleGray_isLowContrast() {
         val result = analyzer.analyze(histogramOf(128 to 20))
 

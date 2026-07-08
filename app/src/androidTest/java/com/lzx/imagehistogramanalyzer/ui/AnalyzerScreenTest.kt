@@ -219,4 +219,78 @@ class AnalyzerScreenTest {
 
         assertTrue(returnedHome)
     }
+
+    @Test
+    fun loadingState_showsProgressAndDisablesPicker() {
+        composeRule.setContent {
+            ImageHistogramAnalyzerTheme {
+                AnalyzerScreen(
+                    uiState = AnalyzerUiState(isProcessing = true),
+                    onBackHome = {},
+                    onPickImage = {},
+                    onSelectStrategy = {},
+                    onCalculate = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("正在读取图片或计算直方图…")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("选择图片").assertIsNotEnabled()
+    }
+
+    @Test
+    fun errorState_showsMessageAndAllowsReselect() {
+        var reselected = false
+        composeRule.setContent {
+            ImageHistogramAnalyzerTheme {
+                AnalyzerScreen(
+                    uiState = AnalyzerUiState(
+                        errorMessage = "图片文件可能已损坏或格式不受支持，请重新选择",
+                    ),
+                    onBackHome = {},
+                    onPickImage = { reselected = true },
+                    onSelectStrategy = {},
+                    onCalculate = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("处理失败").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("图片文件可能已损坏或格式不受支持，请重新选择")
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("选择图片").performClick()
+        assertTrue(reselected)
+    }
+
+    @Test
+    fun existingImage_showsReselectAction() {
+        val bitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
+        var reselected = false
+        composeRule.setContent {
+            ImageHistogramAnalyzerTheme {
+                AnalyzerScreen(
+                    uiState = AnalyzerUiState(
+                        image = bitmap,
+                        metadata = ImageMetadata(
+                            displayName = "existing.jpg",
+                            mimeType = "image/jpeg",
+                            width = 2,
+                            height = 2,
+                        ),
+                    ),
+                    onBackHome = {},
+                    onPickImage = { reselected = true },
+                    onSelectStrategy = {},
+                    onCalculate = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("重新选择图片")
+            .assertHasClickAction()
+            .performClick()
+        assertTrue(reselected)
+    }
 }

@@ -1,5 +1,6 @@
 package com.lzx.imagehistogramanalyzer.ui
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.BackHandler
 import androidx.activity.result.PickVisualMediaRequest
@@ -22,10 +23,11 @@ fun ImageHistogramApp(viewModel: AnalyzerViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var destination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
     val photoPicker = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
-        if (uri != null) {
-            viewModel.selectImage(uri)
-            destination = AppDestination.ANALYZER
-        }
+        handlePhotoPickerResult(
+            uri = uri,
+            onImageSelected = viewModel::selectImage,
+            onOpenAnalyzer = { destination = AppDestination.ANALYZER },
+        )
     }
 
     BackHandler(enabled = destination == AppDestination.ANALYZER) {
@@ -75,4 +77,15 @@ internal fun ImageHistogramContent(
 internal enum class AppDestination {
     HOME,
     ANALYZER,
+}
+
+/** 系统选择器取消时不改变当前页面或已完成的分析结果。 */
+internal fun handlePhotoPickerResult(
+    uri: Uri?,
+    onImageSelected: (Uri) -> Unit,
+    onOpenAnalyzer: () -> Unit,
+) {
+    if (uri == null) return
+    onImageSelected(uri)
+    onOpenAnalyzer()
 }

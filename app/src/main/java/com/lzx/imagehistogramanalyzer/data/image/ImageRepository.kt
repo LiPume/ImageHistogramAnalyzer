@@ -5,11 +5,15 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+fun interface ImageLoader {
+    suspend fun load(uri: Uri): DecodedImage
+}
+
 class ImageRepository(
     private val bitmapDecoder: BitmapDecoder,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-) {
-    suspend fun load(uri: Uri): DecodedImage = withContext(ioDispatcher) {
+) : ImageLoader {
+    override suspend fun load(uri: Uri): DecodedImage = withContext(ioDispatcher) {
         bitmapDecoder.decode(uri)
     }
 }
