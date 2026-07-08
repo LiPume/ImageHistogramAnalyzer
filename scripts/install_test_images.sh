@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-IMAGE_DIR="${ROOT_DIR}/test_pic"
+IMAGE_DIR="${1:-${ROOT_DIR}/test_pic}"
 REMOTE_DIR="/sdcard/Pictures/ImageHistogramAnalyzer"
 
 if command -v adb >/dev/null 2>&1; then
@@ -38,28 +38,26 @@ fi
 ADB_DEVICE=("${ADB}" -s "${SERIAL}")
 "${ADB_DEVICE[@]}" shell mkdir -p "${REMOTE_DIR}"
 
-shopt -s nullglob
-IMAGES=(
-    "${IMAGE_DIR}"/*.jpg
-    "${IMAGE_DIR}"/*.jpeg
-    "${IMAGE_DIR}"/*.png
-    "${IMAGE_DIR}"/*.webp
+IMAGE_COUNT=0
+while IFS= read -r image; do
+    filename="$(basename "${image}")"
+    remote_file="${REMOTE_DIR}/${filename}"
+    echo "安装测试图片：${filename}"
+    "${ADB_DEVICE[@]}" push "${image}" "${remote_file}" </dev/null >/dev/null
+    "${ADB_DEVICE[@]}" shell am broadcast \
+        -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
+        -d "file://${remote_file}" </dev/null >/dev/null
+    IMAGE_COUNT=$((IMAGE_COUNT + 1))
+done < <(
+    find "${IMAGE_DIR}" -type f \
+        \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+        -print | sort
 )
 
-if [[ "${#IMAGES[@]}" -eq 0 ]]; then
+if [[ "${IMAGE_COUNT}" -eq 0 ]]; then
     echo "错误：${IMAGE_DIR} 中没有 JPG、PNG 或 WebP 图片。" >&2
     exit 1
 fi
 
-for image in "${IMAGES[@]}"; do
-    filename="$(basename "${image}")"
-    remote_file="${REMOTE_DIR}/${filename}"
-    echo "安装测试图片：${filename}"
-    "${ADB_DEVICE[@]}" push "${image}" "${remote_file}" >/dev/null
-    "${ADB_DEVICE[@]}" shell am broadcast \
-        -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
-        -d "file://${remote_file}" >/dev/null
-done
-
-echo "已安装 ${#IMAGES[@]} 张图片到设备 ${SERIAL} 的 ${REMOTE_DIR}。"
+echo "已安装 ${IMAGE_COUNT} 张图片到设备 ${SERIAL} 的 ${REMOTE_DIR}。"
 echo "重新打开系统图片选择器即可看到测试图片。"

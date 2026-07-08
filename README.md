@@ -26,6 +26,7 @@ ANDROID_SERIAL=emulator-5554 ./scripts/install_test_images.sh
 - `docs/协作规范.md`
 - `docs/开源项目技术借鉴记录.md`
 - `docs/性能优化数据表.md`
+- `docs/测试图片清单.md`
 
 ## 项目专用 Agent Skill
 
