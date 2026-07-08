@@ -130,20 +130,21 @@
 - [x] `UI-01`（P0，负责人：`lzx`）已只读研究 7 个公开仓库的 README、主 Skill 与 Compose/Material 3/性能/测试/无障碍相关文件；未执行第三方脚本、未安装依赖，来源和采用边界见 `docs/agent-skill-study.md`。
 - [x] `UI-02`（P0，负责人：`lzx`）已确认项目为单 `:app` 模块、Kotlin + Compose + Material 3 + ViewModel/StateFlow，无 XML 页面、Navigation、Room、Hilt/Koin、Retrofit；修改前 `:app:assembleDebug` 通过，Git 仅有本阶段 TODO 与未跟踪 `test/`。
 - [x] `UI-03`（P0，负责人：`lzx`，依赖：UI-01、02）已更新根目录 `AGENTS.md`，创建 `docs/agent-skill-study.md` 和项目本地 `skills/android-ui-material3/SKILL.md`，明确单模块和课程边界。
-- [x] `UI-04`（P0，负责人：`lzx`，依赖：UI-01、02）已创建 `docs/ui-design-system.md`，定义 light/dark 色彩、排版、间距、圆角、组件、页面状态、信息层级、图表和无障碍规范。
+- [x] `UI-04`（P0，负责人：`lzx`，依赖：UI-01、02）已创建 `docs/ui-design-system.md`，定义主题色彩、排版、间距、圆角、组件、页面状态、信息层级、图表和无障碍规范；当前主题决策由 `UI-11` 更新为固定 light。
 - [x] `UI-05`（P0，负责人：`lzx`，依赖：UI-04）首屏和分析页选图按钮均改为真实动作“选择图片/重新选择图片”，不再把打开系统选择器表述为“开始分析”。
 - [x] `UI-06`（P0，负责人：`lzx`，依赖：UI-04）新增可滚动首页，说明本地选图/系统选择器拍照、两种计算流程、质量判断、性能分段和 300ms 口径。
 - [x] `UI-07`（P0，负责人：`lzx`，依赖：UI-04）新增首页/分析页轻量目的地状态、分析页“返回首页”和系统返回处理；回首页后保留已选图并提供“继续查看分析”，未新增 Navigation 依赖。
 - [x] `UI-08`（P1，负责人：`lzx`，依赖：UI-04）质量卡增加暗部/中间调/亮部分布条，性能卡增加 300ms 预算条；保留全部精确数值、文字结论和计时口径，未新增图表依赖。
-- [x] `UI-09`（P1，负责人：`lzx`，依赖：UI-05~08）补齐 light/dark color scheme、Typography、Shapes 和间距 token；API 36.1 模拟器已人工检查 light、dark、1.5× 字体与 edge-to-edge，主要按钮由 M3 保证 48dp，页面标题和图表补齐语义。
+- [x] `UI-09`（P1，负责人：`lzx`，依赖：UI-05~08）补齐 ColorScheme、Typography、Shapes 和间距 token；后续 `UI-11` 按用户选择固定 light，主要按钮由 M3 保证 48dp，页面标题和图表补齐语义。
 - [x] `UI-10`（P0，负责人：`lzx`，依赖：UI-05~09）新增首页动作/能力说明/继续分析、返回首页和两条图表语义测试；`testDebugUnitTest`、`assembleDebug`、`assembleDebugAndroidTest`、`lintDebug` 均通过，API 36.1 模拟器 12 项通过、1 项显式 benchmark 按设计跳过、0 失败。
+- [x] `UI-11`（P1，负责人：`lzx`）已将用户选定的 B“晴空柑橘”固定 light 方案落地：蓝色主按钮，浅蓝/薄荷绿/淡柑橘黄功能模块，蓝/橙/绿质量分布和蓝色性能预算；补齐蓝灰 surface containers，算法选中态统一浅蓝，消除紫色底卡与绿色选中态冲突；课程直方图继续保持白底黑柱。API 36.1 模拟器在系统 dark mode 下仍显示固定 light，实际选图后验证方案卡未出现紫/绿冲突；JVM/构建/Lint 通过，设备测试 12 项通过、1 项显式 benchmark 跳过、0 失败。
 
 ### 本阶段产物
 
 - 项目级 Agent/UI 规则：`AGENTS.md`、`skills/android-ui-material3/SKILL.md`。
 - 研究与设计文档：`docs/agent-skill-study.md`、`docs/ui-design-system.md`。
 - 新首页、可返回分析流程、语义一致的选图按钮、质量分布条和 300ms 预算条。
-- light/dark 与 1.5× 字体模拟器截图检查、Compose UI 回归和完整 Debug 构建门禁记录。
+- 固定 light、1.5× 字体和系统 dark mode 下仍保持 light 的模拟器检查、Compose UI 回归和完整 Debug 构建门禁记录。
 
 ### 验收标准
 
@@ -151,7 +152,7 @@
 - 用户进入分析流程后可明确返回首页，返回不破坏已验证的图片、直方图、质量分析和性能功能。
 - 图表只表达重要比例或阶段关系，精确数值仍可读；不新增大型 UI/图表依赖。
 - UI 逻辑保持状态提升，Composable 不执行图片解码、直方图或质量算法。
-- light/dark、窄屏滚动、字体缩放、触控目标、语义和主要状态通过检查与自动化测试。
+- 固定 light、窄屏滚动、字体缩放、触控目标、语义和主要状态通过检查与自动化测试。
 
 ## 阶段 3：性能优化与验收
 

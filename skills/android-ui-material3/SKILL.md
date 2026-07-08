@@ -16,7 +16,7 @@ Use this skill only for the ImageHistogramAnalyzer single-module course app. Pre
 
 ## Material 3 rules
 
-- Resolve color, type, and shape through `MaterialTheme`; preserve the indigo/teal light/dark schemes.
+- Resolve color, type, and shape through `MaterialTheme`; preserve the selected B “Sky & Citrus” fixed light scheme.
 - Use the project 8dp spacing scale and tonal surface containers. Avoid page-local colors, arbitrary radii, excess shadows, and decorative gradients.
 - Match navigation to scope: this two-level flow needs a home destination, an analyzer destination, and a clear top-bar/system back path—not a new navigation framework.
 - Labels describe the immediate action. A system picker action is “选择图片”.
@@ -39,7 +39,7 @@ Use this skill only for the ImageHistogramAnalyzer single-module course app. Pre
 - [ ] Cards follow a clear title → summary → evidence → detail order.
 - [ ] Exact histogram, quality, and performance values remain visible.
 - [ ] Any new visualization answers a specific question and needs no third-party chart library.
-- [ ] Light/dark themes and 1.5× font scaling remain readable.
+- [ ] The fixed light theme and 1.5× font scaling remain readable, including when the device uses dark mode.
 
 ## Performance checklist
 
@@ -55,7 +55,7 @@ Use this skill only for the ImageHistogramAnalyzer single-module course app. Pre
 - [ ] Meaningful images and actions have action-oriented descriptions; decorative graphics are null.
 - [ ] Section titles expose heading semantics.
 - [ ] Custom distribution/progress graphics expose one concise semantic summary and retain text values.
-- [ ] Status is not conveyed by color alone; contrast works in light and dark themes.
+- [ ] Status is not conveyed by color alone; contrast works throughout the fixed light theme.
 
 ## Verification
 

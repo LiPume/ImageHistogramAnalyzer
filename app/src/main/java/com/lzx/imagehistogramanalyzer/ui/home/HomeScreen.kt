@@ -1,6 +1,5 @@
 package com.lzx.imagehistogramanalyzer.ui.home
 
-import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -72,6 +72,8 @@ fun HomeScreen(
                     number = "01",
                     title = stringResource(R.string.home_histogram_feature_title),
                     description = stringResource(R.string.home_histogram_feature_description),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
             item {
@@ -79,6 +81,8 @@ fun HomeScreen(
                     number = "02",
                     title = stringResource(R.string.home_quality_feature_title),
                     description = stringResource(R.string.home_quality_feature_description),
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
             }
             item {
@@ -86,6 +90,8 @@ fun HomeScreen(
                     number = "03",
                     title = stringResource(R.string.home_performance_feature_title),
                     description = stringResource(R.string.home_performance_feature_description),
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
             }
             item {
@@ -194,10 +200,17 @@ private fun SectionTitle(text: String) {
 }
 
 @Composable
-private fun FeatureCard(number: String, title: String, description: String) {
+private fun FeatureCard(
+    number: String,
+    title: String,
+    description: String,
+    containerColor: Color,
+    contentColor: Color,
+) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = containerColor,
+            contentColor = contentColor,
         ),
     ) {
         Row(
@@ -211,13 +224,13 @@ private fun FeatureCard(number: String, title: String, description: String) {
                 modifier = Modifier
                     .size(AppSpacing.extraLarge)
                     .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = number,
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = contentColor,
                 )
             }
             Column(
@@ -228,7 +241,7 @@ private fun FeatureCard(number: String, title: String, description: String) {
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = contentColor.copy(alpha = 0.78f),
                 )
             }
         }
@@ -259,12 +272,6 @@ private fun StepRow(number: String, text: String) {
 }
 
 @Preview(name = "首页 Light", widthDp = 360, showBackground = true)
-@Preview(
-    name = "首页 Dark",
-    widthDp = 360,
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES,
-)
 @Composable
 private fun HomeScreenPreview() {
     ImageHistogramAnalyzerTheme {

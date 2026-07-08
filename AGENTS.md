@@ -24,10 +24,10 @@ Before editing:
 ## UI and Compose rules
 
 - Use `MaterialTheme.colorScheme`, `MaterialTheme.typography`, and `MaterialTheme.shapes`; new screen code must not hardcode colors, arbitrary text sizes, or repeated corner radii.
-- Preserve the existing indigo/teal visual identity and support both light and dark themes. Static colors are intentional so course screenshots remain comparable across devices.
+- Preserve the selected B “Sky & Citrus” identity: blue primary actions, mint quality accents, and citrus performance accents. The app intentionally uses a fixed light theme, even when the device uses dark mode.
 - Use an 8dp-based spacing scale. Interactive targets must be at least 48dp. Apply `Scaffold` padding and system insets correctly.
 - Screen state flows down and callbacks flow up. Keep expensive decoding, histogram work, quality analysis, and formatting out of composable bodies.
-- Keep previewable components stateless and parameter-driven. Add app-themed light/dark previews to new reusable visual components when practical.
+- Keep previewable components stateless and parameter-driven. Add app-themed light previews to new reusable visual components when practical.
 - Use `remember` only for values that need to survive recomposition; use `derivedStateOf` only when inputs change more often than the derived result. Do not add either as decoration.
 - Static, heterogeneous screen sections may use `LazyColumn`; domain lists require stable keys, while one-off static sections do not need artificial keys.
 - Give meaningful images/actions clear semantics, mark section headings, expose custom chart meaning through `contentDescription`, and retain exact numeric values beside visual summaries.

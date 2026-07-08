@@ -6,7 +6,7 @@
 
 | Source | Main Use | Adopted? | Reason |
 |---|---|---|---|
-| [hamen/material-3-skill](https://github.com/hamen/material-3-skill)；`skills/material-3/SKILL.md`、`references/color-system.md`、`theming-and-dynamic-color.md`、`typography-and-shape.md`、`navigation-patterns.md`、`layout-and-responsive.md` | Material 3 token、主题、组件、布局和审计 | 部分采用 | 采用色彩角色、排版/形状、8dp 间距、tonal surface、light/dark 与无障碍；不引入生成器或额外 CLI。 |
+| [hamen/material-3-skill](https://github.com/hamen/material-3-skill)；`skills/material-3/SKILL.md`、`references/color-system.md`、`theming-and-dynamic-color.md`、`typography-and-shape.md`、`navigation-patterns.md`、`layout-and-responsive.md` | Material 3 token、主题、组件、布局和审计 | 部分采用 | 采用色彩角色、排版/形状、8dp 间距、tonal surface 与无障碍；按用户决定只实现固定 light，不引入生成器或额外 CLI。 |
 | [aldefy/compose-skill](https://github.com/aldefy/compose-skill)；`skills/compose-expert/SKILL.md` | Compose 状态、组件边界、Modifier、预览与性能 | 采用 | 与现有 Compose + UDF 技术栈一致，强调最小正确方案和按需抽象。 |
 | [anhvt52/jetpack-compose-skills](https://github.com/anhvt52/jetpack-compose-skills)；`modern-jetpack-compose/SKILL.md` 及 design/state/accessibility/performance references | 现代 Compose 写作与审查顺序 | 部分采用 | 采用生命周期感知状态、Material 3、状态下沉与无障碍；其建议的按 feature 组织按本项目规模轻量应用。 |
 | [skydoves/compose-performance-skills](https://github.com/skydoves/compose-performance-skills)；lazy layout、`derivedStateOf`、effects、stability、modifier skills | 防止 UI 美化引入重组和滚动开销 | 部分采用 | 采用“先测量再优化”、稳定参数、正确状态读取和 Lazy 布局原则；不为静态页面机械添加 key、缓存或注解。 |
@@ -18,8 +18,8 @@
 
 ### Material Design 3
 
-- 现有靛蓝 `#3F51B5` 作为品牌 seed，青绿色作为次级强调；所有页面从 `MaterialTheme.colorScheme` 取语义角色。
-- 补齐 light/dark 的 container、surface、outline、error 角色，不在页面内散落 ARGB 颜色。
+- 用户于 2026-07-08 选定 B“晴空柑橘”：天空蓝 `#3577C8` 负责主要动作，薄荷绿负责质量信息，柑橘黄负责性能/中间调强调；所有页面从 `MaterialTheme.colorScheme` 取语义角色。
+- 补齐固定 light 的 container、surface、outline、error 角色，不在页面内散落 ARGB 颜色；显式覆盖全部 surface container，避免 Material 默认紫灰色混入。
 - 使用 8dp 间距基线、统一 Shapes 与 Typography；卡片以 tonal surface 建立层级，避免堆阴影。
 - 两层页面使用顶部返回动作，不引入 bottom bar、rail 或 drawer。
 - 按钮、空态、加载、错误、成功状态必须语义明确；主要点击目标至少 48dp。
@@ -54,7 +54,7 @@
 
 ## Rules Not Adopted
 
-- **动态取色**：课程截图和性能对比需要跨设备一致视觉，本项目采用固定 light/dark scheme，不随壁纸变化。
+- **动态取色和 dark theme**：用户选择固定 B light 方案，课程截图和性能对比也需要跨设备一致视觉，因此不随壁纸或系统深色模式变化。
 - **Hilt/Koin、Room、Retrofit、离线优先和多模块 Clean Architecture**：项目没有远端或持久化需求，引入只会扩大构建与答辩复杂度。
 - **Navigation Compose**：目前只有“首页 → 分析页”两层，没有深链与复杂回退栈，轻量 UI 状态更合适。
 - **第三方图表、截图测试和新图片加载库**：两条比例可视化可由 Compose 原生布局完成，暂不为美化增加依赖。

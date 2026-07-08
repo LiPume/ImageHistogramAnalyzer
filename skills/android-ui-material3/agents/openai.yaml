@@ -1,5 +1,5 @@
 interface:
   display_name: "Android UI Material 3"
   short_description: "优化本项目 Compose 与 Material 3 界面"
-  brand_color: "#3F51B5"
+  brand_color: "#3577C8"
   default_prompt: "Use $android-ui-material3 to audit and improve this project UI without changing histogram business logic."
