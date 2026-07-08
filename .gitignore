@@ -15,6 +15,7 @@ local.properties
 
 # 测试、截图与系统文件
 captures/
+test/
 .DS_Store
 
 # 外部开源参考仓库仅供本地阅读，不纳入本项目版本控制
