@@ -26,6 +26,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.lzx.imagehistogramanalyzer.R
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
+import com.lzx.imagehistogramanalyzer.domain.roi.PreviewImageLayout
+import com.lzx.imagehistogramanalyzer.domain.roi.PreviewRect
 import com.lzx.imagehistogramanalyzer.ui.component.HistogramCard
 import com.lzx.imagehistogramanalyzer.ui.component.ImagePickerCard
 import com.lzx.imagehistogramanalyzer.ui.component.ImagePreviewCard
@@ -41,6 +43,10 @@ fun AnalyzerScreen(
     onPickImage: () -> Unit,
     onSelectStrategy: (HistogramCalculationStrategy) -> Unit,
     onCalculate: () -> Unit,
+    onStartRoiSelection: () -> Unit = {},
+    onCancelRoiSelection: () -> Unit = {},
+    onConfirmRoiSelection: (PreviewRect, PreviewImageLayout) -> Unit = { _, _ -> },
+    onRestoreFullImage: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -121,7 +127,19 @@ fun AnalyzerScreen(
             val metadata = uiState.metadata
             if (image != null && metadata != null) {
                 item {
-                    ImagePreviewCard(bitmap = image, metadata = metadata)
+                    ImagePreviewCard(
+                        bitmap = image,
+                        metadata = metadata,
+                        analysisTargetInfo = uiState.analysisTargetInfo,
+                        isRoiSelectionMode = uiState.isRoiSelectionMode,
+                        isProcessing = uiState.isProcessing,
+                        canRestoreFullImage = uiState.canRestoreFullImage,
+                        canConfirmRoi = uiState.selectedStrategy != null,
+                        onStartRoiSelection = onStartRoiSelection,
+                        onCancelRoiSelection = onCancelRoiSelection,
+                        onConfirmRoiSelection = onConfirmRoiSelection,
+                        onRestoreFullImage = onRestoreFullImage,
+                    )
                 }
                 item {
                     StrategySelectionCard(

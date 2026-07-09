@@ -13,6 +13,9 @@ import com.lzx.imagehistogramanalyzer.domain.histogram.BaselineHistogramCalculat
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
 import com.lzx.imagehistogramanalyzer.domain.histogram.PreGrayscaleHistogramCalculator
 import com.lzx.imagehistogramanalyzer.domain.model.ImageMetadata
+import com.lzx.imagehistogramanalyzer.domain.roi.AnalysisTargetType
+import com.lzx.imagehistogramanalyzer.domain.roi.PreviewImageLayout
+import com.lzx.imagehistogramanalyzer.domain.roi.PreviewRect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -21,6 +24,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -142,6 +146,69 @@ class AnalyzerViewModelTest {
         assertEquals(1, state.rgbStats!!.blueCounts[255])
         assertEquals(2L, state.rgbStats!!.pixelCount)
         assertEquals(2L, state.histogram!!.pixelCount)
+    }
+
+    @Test
+    fun roiSelection_cropsCurrentImageRecalculatesAndRestoresFullImage() = runBlocking {
+        val pixels = IntArray(16) { argb(255, 255, 255) }.apply {
+            this[5] = argb(0, 0, 0)
+            this[6] = argb(0, 0, 0)
+            this[9] = argb(0, 0, 0)
+            this[10] = argb(0, 0, 0)
+        }
+        val bitmap = Bitmap.createBitmap(pixels, 4, 4, Bitmap.Config.ARGB_8888)
+        val viewModel = createViewModel(
+            ImageLoader {
+                DecodedImage(
+                    bitmap = bitmap,
+                    metadata = ImageMetadata(
+                        displayName = "roi-source.png",
+                        mimeType = "image/png",
+                        width = 4,
+                        height = 4,
+                    ),
+                )
+            },
+        )
+
+        viewModel.selectImage(TEST_URI)
+        withTimeout(2_000) {
+            viewModel.uiState.first { !it.isProcessing && it.image != null }
+        }
+        viewModel.selectStrategy(HistogramCalculationStrategy.GRAYSCALE_WHILE_COUNTING)
+        viewModel.confirmRoiSelection(
+            previewRect = PreviewRect(1f, 1f, 3f, 3f),
+            previewImageLayout = PreviewImageLayout(
+                bitmapWidth = 4,
+                bitmapHeight = 4,
+                containerWidth = 4f,
+                containerHeight = 4f,
+            ),
+        )
+        val roiState = withTimeout(2_000) {
+            viewModel.uiState.first { !it.isProcessing && it.histogram != null }
+        }
+
+        assertEquals(2, roiState.image!!.width)
+        assertEquals(2, roiState.image!!.height)
+        assertEquals(2, roiState.metadata!!.width)
+        assertEquals(2, roiState.metadata!!.height)
+        assertEquals(AnalysisTargetType.ROI_REGION, roiState.analysisTargetInfo!!.type)
+        assertEquals(4L, roiState.histogram!!.pixelCount)
+        assertEquals(4L, roiState.rgbStats!!.pixelCount)
+        assertEquals(0.25, roiState.analysisTargetInfo!!.areaRatio!!, 0.0001)
+        assertTrue(roiState.canRestoreFullImage)
+
+        viewModel.restoreFullImageAnalysis()
+        val restoredState = withTimeout(2_000) {
+            viewModel.uiState.first { !it.isProcessing && it.histogram?.pixelCount == 16L }
+        }
+
+        assertSame(bitmap, restoredState.image)
+        assertEquals(AnalysisTargetType.FULL_IMAGE, restoredState.analysisTargetInfo!!.type)
+        assertEquals(4, restoredState.metadata!!.width)
+        assertEquals(4, restoredState.metadata!!.height)
+        assertFalse(restoredState.canRestoreFullImage)
     }
 
     private suspend fun AnalyzerViewModel.awaitErrorState(): AnalyzerUiState = withTimeout(2_000) {

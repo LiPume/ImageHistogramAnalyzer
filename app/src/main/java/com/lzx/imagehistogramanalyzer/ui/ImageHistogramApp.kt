@@ -13,6 +13,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
+import com.lzx.imagehistogramanalyzer.domain.roi.PreviewImageLayout
+import com.lzx.imagehistogramanalyzer.domain.roi.PreviewRect
 import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerScreen
 import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerUiState
 import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerViewModel
@@ -44,6 +46,10 @@ fun ImageHistogramApp(viewModel: AnalyzerViewModel) {
         onBackHome = { destination = AppDestination.HOME },
         onSelectStrategy = viewModel::selectStrategy,
         onCalculate = viewModel::calculateHistogram,
+        onStartRoiSelection = viewModel::startRoiSelection,
+        onCancelRoiSelection = viewModel::cancelRoiSelection,
+        onConfirmRoiSelection = viewModel::confirmRoiSelection,
+        onRestoreFullImage = viewModel::restoreFullImageAnalysis,
     )
 }
 
@@ -56,6 +62,10 @@ internal fun ImageHistogramContent(
     onBackHome: () -> Unit,
     onSelectStrategy: (HistogramCalculationStrategy) -> Unit,
     onCalculate: () -> Unit,
+    onStartRoiSelection: () -> Unit,
+    onCancelRoiSelection: () -> Unit,
+    onConfirmRoiSelection: (PreviewRect, PreviewImageLayout) -> Unit,
+    onRestoreFullImage: () -> Unit,
 ) {
     when (destination) {
         AppDestination.HOME -> HomeScreen(
@@ -70,6 +80,10 @@ internal fun ImageHistogramContent(
             onPickImage = onPickImage,
             onSelectStrategy = onSelectStrategy,
             onCalculate = onCalculate,
+            onStartRoiSelection = onStartRoiSelection,
+            onCancelRoiSelection = onCancelRoiSelection,
+            onConfirmRoiSelection = onConfirmRoiSelection,
+            onRestoreFullImage = onRestoreFullImage,
         )
     }
 }

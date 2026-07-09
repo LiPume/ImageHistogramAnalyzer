@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsDisplayed
@@ -15,6 +16,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.moveBy
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
 import com.lzx.imagehistogramanalyzer.domain.color.RgbHistogramAnalyzer
 import com.lzx.imagehistogramanalyzer.domain.insight.ImageInsightAnalyzer
@@ -24,11 +27,16 @@ import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
 import com.lzx.imagehistogramanalyzer.domain.model.ImageMetadata
 import com.lzx.imagehistogramanalyzer.domain.model.ImageQualityCategory
 import com.lzx.imagehistogramanalyzer.domain.model.ImageQualityResult
+import com.lzx.imagehistogramanalyzer.domain.roi.PreviewImageLayout
+import com.lzx.imagehistogramanalyzer.domain.roi.PreviewRect
 import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerScreen
 import com.lzx.imagehistogramanalyzer.ui.analyzer.ANALYZER_LIST_TEST_TAG
 import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerUiState
 import com.lzx.imagehistogramanalyzer.ui.component.PerformanceCard
+import com.lzx.imagehistogramanalyzer.ui.component.ROI_PREVIEW_TEST_TAG
 import com.lzx.imagehistogramanalyzer.ui.theme.ImageHistogramAnalyzerTheme
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -196,6 +204,72 @@ class AnalyzerScreenTest {
             .assertIsEnabled()
             .performClick()
         assertTrue(calculated)
+    }
+
+    @Test
+    fun roiSelectionMode_dragConfirmSendsPreviewRectAndLayout() {
+        val bitmap = Bitmap.createBitmap(80, 60, Bitmap.Config.ARGB_8888)
+        var uiState by mutableStateOf(
+            AnalyzerUiState(
+                image = bitmap,
+                metadata = ImageMetadata(
+                    displayName = "roi.jpg",
+                    mimeType = "image/jpeg",
+                    width = 80,
+                    height = 60,
+                ),
+                selectedStrategy = HistogramCalculationStrategy.PRE_GRAYSCALE,
+            ),
+        )
+        var confirmedRect: PreviewRect? = null
+        var confirmedLayout: PreviewImageLayout? = null
+
+        composeRule.setContent {
+            ImageHistogramAnalyzerTheme {
+                AnalyzerScreen(
+                    uiState = uiState,
+                    onBackHome = {},
+                    onPickImage = {},
+                    onSelectStrategy = {},
+                    onCalculate = {},
+                    onStartRoiSelection = {
+                        uiState = uiState.copy(isRoiSelectionMode = true)
+                    },
+                    onCancelRoiSelection = {
+                        uiState = uiState.copy(isRoiSelectionMode = false)
+                    },
+                    onConfirmRoiSelection = { rect, layout ->
+                        confirmedRect = rect
+                        confirmedLayout = layout
+                    },
+                    onRestoreFullImage = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("选择局部分析区域")
+            .performScrollTo()
+            .assertIsEnabled()
+            .performClick()
+        composeRule.onNodeWithText("确认区域并重新分析")
+            .assertIsNotEnabled()
+        composeRule.onNodeWithTag(ROI_PREVIEW_TEST_TAG)
+            .performTouchInput {
+                down(center)
+                moveBy(Offset(48f, 36f))
+                up()
+            }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("确认区域并重新分析")
+            .assertIsEnabled()
+            .performClick()
+
+        assertNotNull(confirmedRect)
+        assertNotNull(confirmedLayout)
+        assertEquals(80, confirmedLayout!!.bitmapWidth)
+        assertEquals(60, confirmedLayout!!.bitmapHeight)
+        assertTrue(confirmedRect!!.right > confirmedRect!!.left)
+        assertTrue(confirmedRect!!.bottom > confirmedRect!!.top)
     }
 
     @Test

@@ -8,11 +8,15 @@ import com.lzx.imagehistogramanalyzer.domain.model.HistogramPerformanceMetrics
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
 import com.lzx.imagehistogramanalyzer.domain.model.ImageMetadata
 import com.lzx.imagehistogramanalyzer.domain.model.ImageQualityResult
+import com.lzx.imagehistogramanalyzer.domain.roi.AnalysisTargetInfo
 
 data class AnalyzerUiState(
     val isProcessing: Boolean = false,
     val image: Bitmap? = null,
     val metadata: ImageMetadata? = null,
+    val analysisTargetInfo: AnalysisTargetInfo? = null,
+    val isRoiSelectionMode: Boolean = false,
+    val canRestoreFullImage: Boolean = false,
     val selectedStrategy: HistogramCalculationStrategy? = null,
     val histogram: HistogramResult? = null,
     val qualityResult: ImageQualityResult? = null,
