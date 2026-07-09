@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.lzx.imagehistogramanalyzer.R
+import com.lzx.imagehistogramanalyzer.domain.insight.ImageInsightResult
 import com.lzx.imagehistogramanalyzer.domain.model.ImageQualityCategory
 import com.lzx.imagehistogramanalyzer.domain.model.ImageQualityResult
 import java.util.Locale
@@ -33,6 +35,7 @@ import java.util.Locale
 @Composable
 fun QualityAnalysisCard(
     result: ImageQualityResult,
+    insight: ImageInsightResult? = null,
     modifier: Modifier = Modifier,
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
@@ -72,6 +75,10 @@ fun QualityAnalysisCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (insight != null) {
+                HorizontalDivider()
+                ImageInsightSection(insight = insight)
+            }
         }
     }
 }
@@ -173,6 +180,65 @@ private fun ToneLegend(label: String, color: Color) {
                 .background(color),
         )
         Text(text = label.substringBefore('（'), style = MaterialTheme.typography.labelMedium)
+    }
+}
+
+@Composable
+private fun ImageInsightSection(insight: ImageInsightResult) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.insight_title),
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.semantics { heading() },
+        )
+        Text(
+            text = stringResource(R.string.insight_basis),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        InsightParagraph(
+            label = stringResource(R.string.insight_summary_label),
+            text = insight.summary,
+        )
+        Text(
+            text = insight.brightnessDescription,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = insight.exposureDescription,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = insight.contrastDescription,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = insight.colorDescription,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        InsightParagraph(
+            label = stringResource(R.string.insight_advice_label),
+            text = insight.advice,
+        )
+    }
+}
+
+@Composable
+private fun InsightParagraph(label: String, text: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 

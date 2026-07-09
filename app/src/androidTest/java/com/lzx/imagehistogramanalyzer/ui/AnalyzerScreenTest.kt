@@ -16,6 +16,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
+import com.lzx.imagehistogramanalyzer.domain.color.RgbHistogramAnalyzer
+import com.lzx.imagehistogramanalyzer.domain.insight.ImageInsightAnalyzer
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramExecutionEngine
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramPerformanceMetrics
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
@@ -62,23 +64,33 @@ class AnalyzerScreenTest {
     fun histogramState_showsCanvasAndPerformanceResult() {
         val counts = IntArray(256).apply { this[128] = 10 }
         val heights = IntArray(256).apply { this[128] = 100 }
+        val histogram = HistogramResult(
+            counts = counts,
+            normalizedHeights = heights,
+            pixelCount = 10,
+            maxCount = 10,
+        )
+        val qualityResult = ImageQualityResult(
+            meanGray = 128.0,
+            darkRatio = 0.1,
+            brightRatio = 0.2,
+            standardDeviation = 42.0,
+            category = ImageQualityCategory.NORMAL,
+        )
+        val rgbStats = RgbHistogramAnalyzer().analyze(IntArray(10) { argb(128, 128, 128) })
+        val insight = ImageInsightAnalyzer().analyze(
+            histogram = histogram,
+            quality = qualityResult,
+            rgbStats = rgbStats,
+        )
         composeRule.setContent {
             ImageHistogramAnalyzerTheme {
                 AnalyzerScreen(
                     uiState = AnalyzerUiState(
-                        histogram = HistogramResult(
-                            counts = counts,
-                            normalizedHeights = heights,
-                            pixelCount = 10,
-                            maxCount = 10,
-                        ),
-                        qualityResult = ImageQualityResult(
-                            meanGray = 128.0,
-                            darkRatio = 0.1,
-                            brightRatio = 0.2,
-                            standardDeviation = 42.0,
-                            category = ImageQualityCategory.NORMAL,
-                        ),
+                        histogram = histogram,
+                        qualityResult = qualityResult,
+                        rgbStats = rgbStats,
+                        imageInsight = insight,
                         decodeTimeNanos = 2_000_000,
                         performanceMetrics = HistogramPerformanceMetrics(
                             pixelReadNanos = 1_000_000,
@@ -102,14 +114,28 @@ class AnalyzerScreenTest {
         composeRule.onNodeWithText("灰度直方图").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithContentDescription("256 个灰度等级的黑白直方图")
             .assertIsDisplayed()
+        composeRule.onNodeWithText("RGB 三通道")
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithContentDescription(
+            "RGB 三通道直方图，R 均值 128.0，G 均值 128.0，B 均值 128.0",
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("通道均值：R 128.0 · G 128.0 · B 128.0")
+            .assertIsDisplayed()
         composeRule.onNodeWithText("图像质量分析")
             .performScrollTo()
             .assertIsDisplayed()
-        composeRule.onNodeWithText("正常").assertIsDisplayed()
-        composeRule.onNodeWithText("128.00").assertIsDisplayed()
+        composeRule.onNodeWithText("正常").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("128.00").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithContentDescription(
             "暗部 10.0%，中间调 70.0%，亮部 20.0%",
         ).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("综合分析")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("综合判断：图像亮度状态为正常，色彩较均衡。")
+            .performScrollTo()
+            .assertIsDisplayed()
         composeRule.onNodeWithTag(ANALYZER_LIST_TEST_TAG).performScrollToIndex(4)
         composeRule.onNodeWithText("已达到核心计算 300ms 目标")
             .performScrollTo()
@@ -293,4 +319,7 @@ class AnalyzerScreenTest {
             .performClick()
         assertTrue(reselected)
     }
+
+    private fun argb(red: Int, green: Int, blue: Int): Int =
+        (0xFF shl 24) or (red shl 16) or (green shl 8) or blue
 }

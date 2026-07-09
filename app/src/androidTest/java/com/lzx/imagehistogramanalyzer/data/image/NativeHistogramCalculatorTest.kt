@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import com.lzx.imagehistogramanalyzer.domain.histogram.BaselineHistogramCalculator
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
 import com.lzx.imagehistogramanalyzer.domain.histogram.PreGrayscaleHistogramCalculator
+import com.lzx.imagehistogramanalyzer.domain.color.RgbHistogramAnalyzer
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramExecutionEngine
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -90,6 +91,7 @@ class NativeHistogramCalculatorTest {
         val bitmap = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888)
         val readPixels = BitmapPixelReader().read(bitmap)
         val nativeCalculator = NativeBitmapHistogramCalculator(requestedWorkers = 4)
+        val expectedRgb = RgbHistogramAnalyzer().analyze(readPixels)
 
         val kotlinPre = PreGrayscaleHistogramCalculator().calculate(readPixels)
         val nativePre = nativeCalculator.calculate(
@@ -98,6 +100,9 @@ class NativeHistogramCalculatorTest {
         )
         assertArrayEquals(kotlinPre.counts, nativePre.histogram.counts)
         assertArrayEquals(kotlinPre.normalizedHeights, nativePre.histogram.normalizedHeights)
+        assertArrayEquals(expectedRgb.redCounts, nativePre.rgbStats.redCounts)
+        assertArrayEquals(expectedRgb.greenCounts, nativePre.rgbStats.greenCounts)
+        assertArrayEquals(expectedRgb.blueCounts, nativePre.rgbStats.blueCounts)
 
         val kotlinFused = BaselineHistogramCalculator().calculate(readPixels)
         val nativeFused = nativeCalculator.calculate(
@@ -106,6 +111,9 @@ class NativeHistogramCalculatorTest {
         )
         assertArrayEquals(kotlinFused.counts, nativeFused.histogram.counts)
         assertArrayEquals(kotlinFused.normalizedHeights, nativeFused.histogram.normalizedHeights)
+        assertArrayEquals(expectedRgb.redCounts, nativeFused.rgbStats.redCounts)
+        assertArrayEquals(expectedRgb.greenCounts, nativeFused.rgbStats.greenCounts)
+        assertArrayEquals(expectedRgb.blueCounts, nativeFused.rgbStats.blueCounts)
         assertEquals(HistogramExecutionEngine.NATIVE_V3, nativeFused.metrics.executionEngine)
         assertEquals(4, nativeFused.metrics.workerCount)
 

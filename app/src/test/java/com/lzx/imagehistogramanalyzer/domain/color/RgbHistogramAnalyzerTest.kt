@@ -71,6 +71,41 @@ class RgbHistogramAnalyzerTest {
     }
 
     @Test
+    fun analyzeCounts_matchesPixelArrayAnalysis() {
+        val pixels = intArrayOf(
+            argb(10, 20, 30),
+            argb(10, 40, 90),
+            argb(255, 40, 90),
+        )
+        val fromPixels = analyzer.analyze(pixels)
+
+        val fromCounts = analyzer.analyzeCounts(
+            redCounts = fromPixels.redCounts,
+            greenCounts = fromPixels.greenCounts,
+            blueCounts = fromPixels.blueCounts,
+        )
+
+        assertArrayEquals(fromPixels.redCounts, fromCounts.redCounts)
+        assertArrayEquals(fromPixels.greenCounts, fromCounts.greenCounts)
+        assertArrayEquals(fromPixels.blueCounts, fromCounts.blueCounts)
+        assertEquals(fromPixels.avgRed, fromCounts.avgRed, TOLERANCE)
+        assertEquals(fromPixels.avgGreen, fromCounts.avgGreen, TOLERANCE)
+        assertEquals(fromPixels.avgBlue, fromCounts.avgBlue, TOLERANCE)
+        assertEquals(fromPixels.colorCastStatus, fromCounts.colorCastStatus)
+    }
+
+    @Test
+    fun mismatchedChannelCounts_areRejected() {
+        val redCounts = IntArray(256).apply { this[10] = 2 }
+        val greenCounts = IntArray(256).apply { this[10] = 1 }
+        val blueCounts = IntArray(256).apply { this[10] = 2 }
+
+        assertThrows(IllegalArgumentException::class.java) {
+            analyzer.analyzeCounts(redCounts, greenCounts, blueCounts)
+        }
+    }
+
+    @Test
     fun alphaChannel_isIgnored() {
         val transparentRed = (0x00 shl 24) or (255 shl 16)
         val opaqueRed = argb(255, 0, 0)

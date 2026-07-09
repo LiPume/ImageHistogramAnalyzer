@@ -11,9 +11,6 @@ class RgbHistogramAnalyzer {
         val redCounts = IntArray(HistogramResult.GRAY_LEVELS)
         val greenCounts = IntArray(HistogramResult.GRAY_LEVELS)
         val blueCounts = IntArray(HistogramResult.GRAY_LEVELS)
-        var redSum = 0L
-        var greenSum = 0L
-        var blueSum = 0L
 
         var index = 0
         while (index < pixels.size) {
@@ -25,16 +22,40 @@ class RgbHistogramAnalyzer {
             redCounts[red]++
             greenCounts[green]++
             blueCounts[blue]++
-            redSum += red.toLong()
-            greenSum += green.toLong()
-            blueSum += blue.toLong()
             index++
         }
 
-        val pixelCount = pixels.size.toLong()
-        val avgRed = redSum.toDouble() / pixelCount
-        val avgGreen = greenSum.toDouble() / pixelCount
-        val avgBlue = blueSum.toDouble() / pixelCount
+        return analyzeCounts(
+            redCounts = redCounts,
+            greenCounts = greenCounts,
+            blueCounts = blueCounts,
+        )
+    }
+
+    fun analyzeCounts(
+        redCounts: IntArray,
+        greenCounts: IntArray,
+        blueCounts: IntArray,
+    ): RgbChannelStats {
+        require(redCounts.size == HistogramResult.GRAY_LEVELS) { "R 通道频次数组必须包含 256 项" }
+        require(greenCounts.size == HistogramResult.GRAY_LEVELS) { "G 通道频次数组必须包含 256 项" }
+        require(blueCounts.size == HistogramResult.GRAY_LEVELS) { "B 通道频次数组必须包含 256 项" }
+        require(redCounts.all { it >= 0 }) { "R 通道频次不能为负数" }
+        require(greenCounts.all { it >= 0 }) { "G 通道频次不能为负数" }
+        require(blueCounts.all { it >= 0 }) { "B 通道频次不能为负数" }
+
+        val pixelCount = redCounts.sumOf { it.toLong() }
+        require(pixelCount > 0) { "像素数量必须大于 0" }
+        require(greenCounts.sumOf { it.toLong() } == pixelCount) {
+            "G 通道频次总和必须等于 R 通道"
+        }
+        require(blueCounts.sumOf { it.toLong() } == pixelCount) {
+            "B 通道频次总和必须等于 R 通道"
+        }
+
+        val avgRed = weightedAverage(redCounts, pixelCount)
+        val avgGreen = weightedAverage(greenCounts, pixelCount)
+        val avgBlue = weightedAverage(blueCounts, pixelCount)
         val channelImbalance = maxOf(avgRed, avgGreen, avgBlue) - minOf(avgRed, avgGreen, avgBlue)
         val dominantChannel = findDominantChannel(avgRed, avgGreen, avgBlue)
         val colorCastStatus = determineColorCastStatus(channelImbalance, dominantChannel)
@@ -51,6 +72,14 @@ class RgbHistogramAnalyzer {
             channelImbalance = channelImbalance,
             colorCastStatus = colorCastStatus,
         )
+    }
+
+    private fun weightedAverage(counts: IntArray, pixelCount: Long): Double {
+        var weightedSum = 0L
+        counts.forEachIndexed { value, count ->
+            weightedSum += value.toLong() * count.toLong()
+        }
+        return weightedSum.toDouble() / pixelCount
     }
 
     private fun findDominantChannel(

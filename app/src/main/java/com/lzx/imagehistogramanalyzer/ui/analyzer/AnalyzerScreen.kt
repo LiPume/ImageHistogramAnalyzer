@@ -135,13 +135,19 @@ fun AnalyzerScreen(
 
             uiState.histogram?.let { histogram ->
                 item {
-                    HistogramCard(histogram = histogram)
+                    HistogramCard(
+                        histogram = histogram,
+                        rgbStats = uiState.rgbStats,
+                    )
                 }
             }
 
             uiState.qualityResult?.let { qualityResult ->
                 item {
-                    QualityAnalysisCard(result = qualityResult)
+                    QualityAnalysisCard(
+                        result = qualityResult,
+                        insight = uiState.imageInsight,
+                    )
                 }
             }
 

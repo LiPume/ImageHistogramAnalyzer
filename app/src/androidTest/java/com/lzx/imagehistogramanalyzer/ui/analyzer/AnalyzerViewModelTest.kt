@@ -10,6 +10,7 @@ import com.lzx.imagehistogramanalyzer.data.image.ImageLoader
 import com.lzx.imagehistogramanalyzer.data.image.ImageOpenException
 import com.lzx.imagehistogramanalyzer.data.image.ImageTooLargeException
 import com.lzx.imagehistogramanalyzer.domain.histogram.BaselineHistogramCalculator
+import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
 import com.lzx.imagehistogramanalyzer.domain.histogram.PreGrayscaleHistogramCalculator
 import com.lzx.imagehistogramanalyzer.domain.model.ImageMetadata
 import kotlinx.coroutines.flow.first
@@ -17,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -103,6 +105,45 @@ class AnalyzerViewModelTest {
         )
     }
 
+    @Test
+    fun calculateHistogram_populatesRgbStatsAndInsight() = runBlocking {
+        val pixels = intArrayOf(
+            argb(255, 0, 0),
+            argb(0, 0, 255),
+        )
+        val bitmap = Bitmap.createBitmap(pixels, 2, 1, Bitmap.Config.ARGB_8888)
+        val viewModel = createViewModel(
+            ImageLoader {
+                DecodedImage(
+                    bitmap = bitmap,
+                    metadata = ImageMetadata(
+                        displayName = "rgb.png",
+                        mimeType = "image/png",
+                        width = 2,
+                        height = 1,
+                    ),
+                )
+            },
+        )
+
+        viewModel.selectImage(TEST_URI)
+        withTimeout(2_000) {
+            viewModel.uiState.first { !it.isProcessing && it.image != null }
+        }
+        viewModel.selectStrategy(HistogramCalculationStrategy.GRAYSCALE_WHILE_COUNTING)
+        viewModel.calculateHistogram()
+        val state = withTimeout(2_000) {
+            viewModel.uiState.first { !it.isProcessing && it.histogram != null }
+        }
+
+        assertNotNull(state.rgbStats)
+        assertNotNull(state.imageInsight)
+        assertEquals(1, state.rgbStats!!.redCounts[255])
+        assertEquals(1, state.rgbStats!!.blueCounts[255])
+        assertEquals(2L, state.rgbStats!!.pixelCount)
+        assertEquals(2L, state.histogram!!.pixelCount)
+    }
+
     private suspend fun AnalyzerViewModel.awaitErrorState(): AnalyzerUiState = withTimeout(2_000) {
         uiState.first { !it.isProcessing && it.errorMessage != null }
     }
@@ -120,3 +161,6 @@ class AnalyzerViewModelTest {
         val TEST_URI: Uri = Uri.parse("content://test/image")
     }
 }
+
+private fun argb(red: Int, green: Int, blue: Int): Int =
+    (0xFF shl 24) or (red shl 16) or (green shl 8) or blue

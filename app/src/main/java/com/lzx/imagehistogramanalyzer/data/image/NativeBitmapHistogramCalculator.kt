@@ -5,18 +5,22 @@ import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrat
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramNormalizer
 import com.lzx.imagehistogramanalyzer.domain.histogram.MonotonicNanoClock
 import com.lzx.imagehistogramanalyzer.domain.histogram.NanoClock
+import com.lzx.imagehistogramanalyzer.domain.color.RgbChannelStats
+import com.lzx.imagehistogramanalyzer.domain.color.RgbHistogramAnalyzer
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramExecutionEngine
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramPerformanceMetrics
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramResult
 
 data class NativeHistogramComputation(
     val histogram: HistogramResult,
+    val rgbStats: RgbChannelStats,
     val metrics: HistogramPerformanceMetrics,
 )
 
 /** Native v3：直接访问 Bitmap 像素，并由线程私有直方图并行统计后归并。 */
 class NativeBitmapHistogramCalculator(
     private val normalizer: HistogramNormalizer = HistogramNormalizer(),
+    private val rgbAnalyzer: RgbHistogramAnalyzer = RgbHistogramAnalyzer(),
     private val clock: NanoClock = MonotonicNanoClock,
     private val requestedWorkers: Int = Runtime.getRuntime().availableProcessors()
         .coerceIn(1, MAX_WORKERS),
@@ -32,13 +36,13 @@ class NativeBitmapHistogramCalculator(
 
         val timings = LongArray(NativeHistogramBridge.TIMING_FIELD_COUNT)
         val coreStart = clock.nowNanos()
-        val counts = NativeHistogramBridge.calculate(
+        val channels = NativeHistogramBridge.calculate(
             bitmap = bitmap,
             strategy = strategy.nativeId,
             workerCount = requestedWorkers,
             timings = timings,
         )
-        require(counts.size == HistogramResult.GRAY_LEVELS) { "Native 频次数量错误" }
+        val counts = channels.grayCounts
 
         val normalizationStart = clock.nowNanos()
         val normalizedHeights = normalizer.normalize(counts)
@@ -54,6 +58,11 @@ class NativeBitmapHistogramCalculator(
         )
         return NativeHistogramComputation(
             histogram = histogram,
+            rgbStats = rgbAnalyzer.analyzeCounts(
+                redCounts = channels.redCounts,
+                greenCounts = channels.greenCounts,
+                blueCounts = channels.blueCounts,
+            ),
             metrics = HistogramPerformanceMetrics(
                 pixelReadNanos = timings[NativeHistogramBridge.LOCK_NANOS_INDEX],
                 grayscaleConversionNanos = if (

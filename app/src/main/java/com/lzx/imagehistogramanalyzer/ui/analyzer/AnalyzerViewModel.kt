@@ -10,8 +10,12 @@ import com.lzx.imagehistogramanalyzer.data.image.ImageOpenException
 import com.lzx.imagehistogramanalyzer.data.image.ImageTooLargeException
 import com.lzx.imagehistogramanalyzer.data.image.NativeBitmapHistogramCalculator
 import com.lzx.imagehistogramanalyzer.data.image.UnsupportedImageTypeException
+import com.lzx.imagehistogramanalyzer.domain.color.RgbChannelStats
+import com.lzx.imagehistogramanalyzer.domain.color.RgbHistogramAnalyzer
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculationStrategy
 import com.lzx.imagehistogramanalyzer.domain.histogram.HistogramCalculator
+import com.lzx.imagehistogramanalyzer.domain.insight.ImageInsightAnalyzer
+import com.lzx.imagehistogramanalyzer.domain.insight.ImageInsightResult
 import com.lzx.imagehistogramanalyzer.domain.histogram.MonotonicNanoClock
 import com.lzx.imagehistogramanalyzer.domain.histogram.NanoClock
 import com.lzx.imagehistogramanalyzer.domain.model.HistogramPerformanceMetrics
@@ -37,6 +41,8 @@ class AnalyzerViewModel(
     histogramCalculators: List<HistogramCalculator>,
     private val nativeCalculator: NativeBitmapHistogramCalculator? = null,
     private val qualityAnalyzer: ImageQualityAnalyzer = ImageQualityAnalyzer(),
+    private val rgbAnalyzer: RgbHistogramAnalyzer = RgbHistogramAnalyzer(),
+    private val insightAnalyzer: ImageInsightAnalyzer = ImageInsightAnalyzer(),
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val clock: NanoClock = MonotonicNanoClock,
 ) : ViewModel() {
@@ -97,6 +103,8 @@ class AnalyzerViewModel(
                     selectedStrategy = strategy,
                     histogram = null,
                     qualityResult = null,
+                    rgbStats = null,
+                    imageInsight = null,
                     performanceMetrics = null,
                     errorMessage = null,
                 )
@@ -115,6 +123,9 @@ class AnalyzerViewModel(
         _uiState.value = current.copy(
             isProcessing = true,
             histogram = null,
+            qualityResult = null,
+            rgbStats = null,
+            imageInsight = null,
             performanceMetrics = null,
             errorMessage = null,
         )
@@ -127,10 +138,17 @@ class AnalyzerViewModel(
                     if (native != null && native.isAvailable) {
                         val result = native.calculate(bitmap, strategy)
                         coroutineContext.ensureActive()
+                        val qualityResult = qualityAnalyzer.analyze(result.histogram)
                         ComputedHistogram(
                             histogram = result.histogram,
                             performanceMetrics = result.metrics,
-                            qualityResult = qualityAnalyzer.analyze(result.histogram),
+                            qualityResult = qualityResult,
+                            rgbStats = result.rgbStats,
+                            imageInsight = insightAnalyzer.analyze(
+                                histogram = result.histogram,
+                                quality = qualityResult,
+                                rgbStats = result.rgbStats,
+                            ),
                         )
                     } else {
                         calculateWithKotlin(bitmap, calculator)
@@ -143,6 +161,8 @@ class AnalyzerViewModel(
                             isProcessing = false,
                             histogram = computed.histogram,
                             qualityResult = computed.qualityResult,
+                            rgbStats = computed.rgbStats,
+                            imageInsight = computed.imageInsight,
                             performanceMetrics = computed.performanceMetrics,
                         )
                     }
@@ -174,10 +194,19 @@ class AnalyzerViewModel(
 
         val activeContext = coroutineContext
         val measured = calculator.calculateMeasured(pixels) { activeContext.ensureActive() }
+        activeContext.ensureActive()
+        val rgbStats = rgbAnalyzer.analyze(pixels)
+        val qualityResult = qualityAnalyzer.analyze(measured.histogram)
         val coreTotalNanos = clock.nowNanos() - calculationStart
         return ComputedHistogram(
             histogram = measured.histogram,
-            qualityResult = qualityAnalyzer.analyze(measured.histogram),
+            qualityResult = qualityResult,
+            rgbStats = rgbStats,
+            imageInsight = insightAnalyzer.analyze(
+                histogram = measured.histogram,
+                quality = qualityResult,
+                rgbStats = rgbStats,
+            ),
             performanceMetrics = HistogramPerformanceMetrics(
                 pixelReadNanos = pixelReadNanos,
                 grayscaleConversionNanos = measured.timings.grayscaleConversionNanos,
@@ -192,6 +221,8 @@ class AnalyzerViewModel(
     private data class ComputedHistogram(
         val histogram: HistogramResult,
         val qualityResult: ImageQualityResult,
+        val rgbStats: RgbChannelStats,
+        val imageInsight: ImageInsightResult,
         val performanceMetrics: HistogramPerformanceMetrics,
     )
 }

@@ -63,7 +63,13 @@ struct PixelView {
     bool premultiplied;
 };
 
-inline uint8_t grayAt(const PixelView& view, uint32_t x, uint32_t y) {
+struct Rgb {
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+};
+
+inline Rgb colorAt(const PixelView& view, uint32_t x, uint32_t y) {
     const uint8_t* rgba = view.pixels + static_cast<size_t>(y) * view.stride + x * 4;
     uint8_t red = rgba[0];
     uint8_t green = rgba[1];
@@ -74,7 +80,12 @@ inline uint8_t grayAt(const PixelView& view, uint32_t x, uint32_t y) {
         green = unpremultiply(green, alpha);
         blue = unpremultiply(blue, alpha);
     }
-    return grayscale(red, green, blue);
+    return Rgb{red, green, blue};
+}
+
+inline uint8_t grayAt(const PixelView& view, uint32_t x, uint32_t y) {
+    const Rgb rgb = colorAt(view, x, y);
+    return grayscale(rgb.red, rgb.green, rgb.blue);
 }
 
 int chooseWorkerCount(int requested, uint32_t height) {
@@ -150,8 +161,16 @@ Java_com_lzx_imagehistogramanalyzer_data_image_NativeHistogramBridge_nativeCalcu
     };
     const size_t pixelCount = static_cast<size_t>(info.width) * info.height;
     std::vector<Histogram> localHistograms(workers);
+    std::vector<Histogram> localRedHistograms(workers);
+    std::vector<Histogram> localGreenHistograms(workers);
+    std::vector<Histogram> localBlueHistograms(workers);
     for (auto& histogram : localHistograms) {
         histogram.fill(0);
+    }
+    for (int worker = 0; worker < workers; ++worker) {
+        localRedHistograms[worker].fill(0);
+        localGreenHistograms[worker].fill(0);
+        localBlueHistograms[worker].fill(0);
     }
 
     int64_t grayscaleNanos = 0;
@@ -160,11 +179,18 @@ Java_com_lzx_imagehistogramanalyzer_data_image_NativeHistogramBridge_nativeCalcu
     if (strategy == kPreGrayscale) {
         std::vector<uint8_t> grayscalePixels(pixelCount);
         const auto grayscaleStart = Clock::now();
-        runRows(workers, info.height, [&](int, uint32_t startRow, uint32_t endRow) {
+        runRows(workers, info.height, [&](int worker, uint32_t startRow, uint32_t endRow) {
+            Histogram& localRed = localRedHistograms[worker];
+            Histogram& localGreen = localGreenHistograms[worker];
+            Histogram& localBlue = localBlueHistograms[worker];
             for (uint32_t y = startRow; y < endRow; ++y) {
                 const size_t rowOffset = static_cast<size_t>(y) * info.width;
                 for (uint32_t x = 0; x < info.width; ++x) {
-                    grayscalePixels[rowOffset + x] = grayAt(view, x, y);
+                    const Rgb rgb = colorAt(view, x, y);
+                    ++localRed[rgb.red];
+                    ++localGreen[rgb.green];
+                    ++localBlue[rgb.blue];
+                    grayscalePixels[rowOffset + x] = grayscale(rgb.red, rgb.green, rgb.blue);
                 }
             }
         });
@@ -184,9 +210,16 @@ Java_com_lzx_imagehistogramanalyzer_data_image_NativeHistogramBridge_nativeCalcu
         const auto countingStart = Clock::now();
         runRows(workers, info.height, [&](int worker, uint32_t startRow, uint32_t endRow) {
             Histogram& local = localHistograms[worker];
+            Histogram& localRed = localRedHistograms[worker];
+            Histogram& localGreen = localGreenHistograms[worker];
+            Histogram& localBlue = localBlueHistograms[worker];
             for (uint32_t y = startRow; y < endRow; ++y) {
                 for (uint32_t x = 0; x < info.width; ++x) {
-                    ++local[grayAt(view, x, y)];
+                    const Rgb rgb = colorAt(view, x, y);
+                    ++localRed[rgb.red];
+                    ++localGreen[rgb.green];
+                    ++localBlue[rgb.blue];
+                    ++local[grayscale(rgb.red, rgb.green, rgb.blue)];
                 }
             }
         });
@@ -194,17 +227,36 @@ Java_com_lzx_imagehistogramanalyzer_data_image_NativeHistogramBridge_nativeCalcu
     }
 
     const auto mergeStart = Clock::now();
-    Histogram merged{};
-    merged.fill(0);
-    for (const auto& local : localHistograms) {
-        for (size_t bin = 0; bin < merged.size(); ++bin) {
-            merged[bin] += local[bin];
+    Histogram mergedGray{};
+    Histogram mergedRed{};
+    Histogram mergedGreen{};
+    Histogram mergedBlue{};
+    mergedGray.fill(0);
+    mergedRed.fill(0);
+    mergedGreen.fill(0);
+    mergedBlue.fill(0);
+    for (int worker = 0; worker < workers; ++worker) {
+        for (size_t bin = 0; bin < mergedGray.size(); ++bin) {
+            mergedGray[bin] += localHistograms[worker][bin];
+            mergedRed[bin] += localRedHistograms[worker][bin];
+            mergedGreen[bin] += localGreenHistograms[worker][bin];
+            mergedBlue[bin] += localBlueHistograms[worker][bin];
         }
     }
     const int64_t mergeNanos = nanosBetween(mergeStart, Clock::now());
 
     AndroidBitmap_unlockPixels(env, bitmap);
     const int64_t totalNanos = nanosBetween(totalStart, Clock::now());
+
+    constexpr size_t kChannelCount = 256;
+    constexpr size_t kResultCount = kChannelCount * 4;
+    std::array<int32_t, kResultCount> merged{};
+    for (size_t bin = 0; bin < kChannelCount; ++bin) {
+        merged[bin] = mergedGray[bin];
+        merged[kChannelCount + bin] = mergedRed[bin];
+        merged[kChannelCount * 2 + bin] = mergedGreen[bin];
+        merged[kChannelCount * 3 + bin] = mergedBlue[bin];
+    }
 
     jintArray countsArray = env->NewIntArray(static_cast<jsize>(merged.size()));
     if (countsArray == nullptr) {

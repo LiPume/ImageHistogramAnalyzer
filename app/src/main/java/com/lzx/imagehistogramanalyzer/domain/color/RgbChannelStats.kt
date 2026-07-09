@@ -28,6 +28,9 @@ class RgbChannelStats(
         require(this.greenCounts.size == HistogramResult.GRAY_LEVELS) { "G 通道频次数组必须包含 256 项" }
         require(this.blueCounts.size == HistogramResult.GRAY_LEVELS) { "B 通道频次数组必须包含 256 项" }
         require(pixelCount > 0) { "像素数量必须大于 0" }
+        require(this.redCounts.all { it >= 0 }) { "R 通道频次不能为负数" }
+        require(this.greenCounts.all { it >= 0 }) { "G 通道频次不能为负数" }
+        require(this.blueCounts.all { it >= 0 }) { "B 通道频次不能为负数" }
         require(avgRed in CHANNEL_VALUE_RANGE) { "R 通道均值必须在 0..255" }
         require(avgGreen in CHANNEL_VALUE_RANGE) { "G 通道均值必须在 0..255" }
         require(avgBlue in CHANNEL_VALUE_RANGE) { "B 通道均值必须在 0..255" }
