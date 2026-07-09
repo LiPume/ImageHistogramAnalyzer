@@ -25,6 +25,7 @@ class HomeScreenTest {
                     hasSelectedImage = false,
                     onPickImage = { pickerOpened = true },
                     onResumeAnalysis = {},
+                    onOpenCamera = {},
                 )
             }
         }
@@ -41,6 +42,28 @@ class HomeScreenTest {
     }
 
     @Test
+    fun home_realtimeCameraActionOpensCameraFlow() {
+        var openedCamera = false
+        composeRule.setContent {
+            ImageHistogramAnalyzerTheme {
+                HomeScreen(
+                    hasSelectedImage = false,
+                    onPickImage = {},
+                    onResumeAnalysis = {},
+                    onOpenCamera = { openedCamera = true },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("打开实时拍摄分析")
+            .assertIsDisplayed()
+            .assertHasClickAction()
+            .performClick()
+        assertTrue(openedCamera)
+        composeRule.onNodeWithText("实时拍摄分析").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
     fun home_withExistingImage_canResumeAnalysis() {
         var resumed = false
         composeRule.setContent {
@@ -49,6 +72,7 @@ class HomeScreenTest {
                     hasSelectedImage = true,
                     onPickImage = {},
                     onResumeAnalysis = { resumed = true },
+                    onOpenCamera = {},
                 )
             }
         }

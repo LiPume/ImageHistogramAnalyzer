@@ -39,6 +39,7 @@ fun HomeScreen(
     hasSelectedImage: Boolean,
     onPickImage: () -> Unit,
     onResumeAnalysis: () -> Unit,
+    onOpenCamera: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -62,6 +63,7 @@ fun HomeScreen(
                     hasSelectedImage = hasSelectedImage,
                     onPickImage = onPickImage,
                     onResumeAnalysis = onResumeAnalysis,
+                    onOpenCamera = onOpenCamera,
                 )
             }
             item {
@@ -92,6 +94,15 @@ fun HomeScreen(
                     description = stringResource(R.string.home_performance_feature_description),
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            }
+            item {
+                FeatureCard(
+                    number = "04",
+                    title = stringResource(R.string.home_camera_feature_title),
+                    description = stringResource(R.string.home_camera_feature_description),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
             item {
@@ -145,6 +156,7 @@ private fun HeroCard(
     hasSelectedImage: Boolean,
     onPickImage: () -> Unit,
     onResumeAnalysis: () -> Unit,
+    onOpenCamera: () -> Unit,
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -185,6 +197,12 @@ private fun HeroCard(
                 ) {
                     Text(stringResource(R.string.resume_analysis))
                 }
+            }
+            OutlinedButton(
+                onClick = onOpenCamera,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.open_realtime_camera))
             }
         }
     }
@@ -279,6 +297,7 @@ private fun HomeScreenPreview() {
             hasSelectedImage = true,
             onPickImage = {},
             onResumeAnalysis = {},
+            onOpenCamera = {},
         )
     }
 }

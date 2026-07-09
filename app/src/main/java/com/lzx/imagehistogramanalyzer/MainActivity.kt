@@ -10,12 +10,14 @@ import androidx.activity.viewModels
 import com.lzx.imagehistogramanalyzer.ui.ImageHistogramApp
 import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerViewModel
 import com.lzx.imagehistogramanalyzer.ui.analyzer.AnalyzerViewModelFactory
+import com.lzx.imagehistogramanalyzer.ui.camera.CameraViewModel
 import com.lzx.imagehistogramanalyzer.ui.theme.ImageHistogramAnalyzerTheme
 
 class MainActivity : ComponentActivity() {
     private val analyzerViewModel: AnalyzerViewModel by viewModels {
         AnalyzerViewModelFactory(contentResolver)
     }
+    private val cameraViewModel: CameraViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,7 +27,10 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             ImageHistogramAnalyzerTheme {
-                ImageHistogramApp(viewModel = analyzerViewModel)
+                ImageHistogramApp(
+                    viewModel = analyzerViewModel,
+                    cameraViewModel = cameraViewModel,
+                )
             }
         }
     }

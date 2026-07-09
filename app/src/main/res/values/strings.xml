@@ -18,12 +18,15 @@
     <string name="home_quality_feature_description">结合平均灰度、暗部/亮部占比和标准差，给出偏暗、偏亮、低对比度或正常结论。</string>
     <string name="home_performance_feature_title">方案与性能对比</string>
     <string name="home_performance_feature_description">对比优先灰度化和统计时灰度化，透明展示解码、计算和归一化等阶段耗时。</string>
+    <string name="home_camera_feature_title">实时拍摄分析</string>
+    <string name="home_camera_feature_description">通过 CameraX 实时预览，周期性生成亮度直方图和基础质量指标，观察当前画面曝光趋势。</string>
     <string name="home_steps_title">三步完成分析</string>
     <string name="home_step_select">从系统选择器选图；支持的手机可直接拍照</string>
     <string name="home_step_strategy">选择课程要求的两种计算流程之一</string>
     <string name="home_step_result">计算后查看直方图、质量结论与耗时</string>
     <string name="home_target_title">核心计算目标：300ms 内</string>
     <string name="home_target_description">核心计时从像素访问开始，到 0–100 归一化完成；图片解码和界面绘制单独展示。</string>
+    <string name="open_realtime_camera">打开实时拍摄分析</string>
     <string name="processing_image">正在读取图片或计算直方图…</string>
     <string name="processing_error_title">处理失败</string>
     <string name="image_preview_title">图片预览</string>
@@ -102,4 +105,21 @@
     <string name="insight_basis">综合分析同时参考黑白灰度直方图、质量指标和 RGB 三通道统计；结论为本地规则生成，不联网。</string>
     <string name="insight_summary_label">结论</string>
     <string name="insight_advice_label">建议</string>
+    <string name="camera_title">实时拍摄分析</string>
+    <string name="camera_intro_title">实时相机说明</string>
+    <string name="camera_intro_description">相机页使用 CameraX 预览，每约 400ms 分析一帧 Y 通道亮度，用于实时观察画面明暗趋势；静态图片验收仍使用课程指定 RGB 灰度公式。</string>
+    <string name="camera_permission_title">需要相机权限</string>
+    <string name="camera_permission_description">授权后只在本机实时分析预览帧，不上传图片，也不保存视频。</string>
+    <string name="request_camera_permission">授权相机并开始预览</string>
+    <string name="camera_preview_title">相机预览</string>
+    <string name="waiting_camera_frame">正在等待实时分析帧…</string>
+    <string name="camera_error_title">相机不可用</string>
+    <string name="realtime_histogram_title">实时亮度直方图</string>
+    <string name="realtime_histogram_description">横轴为亮度 0–255，纵轴归一化到 0–100；数据来自 CameraX Y 通道。</string>
+    <string name="camera_frame_size">帧尺寸</string>
+    <string name="camera_frame_source">数据源</string>
+    <string name="camera_frame_source_y_plane">Y 通道亮度</string>
+    <string name="histogram_max_count_label">最高亮度频次</string>
+    <string name="realtime_quality_title">实时质量指标</string>
+    <string name="realtime_quality_description">以下指标由实时亮度直方图计算，用于辅助观察欠曝、过曝和低对比度趋势。</string>
 </resources>
