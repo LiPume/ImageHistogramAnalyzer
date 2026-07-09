@@ -83,6 +83,7 @@ fun ImageHistogramApp(
         onCameraBindingChanged = cameraViewModel::setBindingCamera,
         onFrameAnalyzed = cameraViewModel::onFrameAnalyzed,
         onCameraError = cameraViewModel::onCameraError,
+        onJudgeCurrentFrame = cameraViewModel::judgeCurrentFrame,
     )
 }
 
@@ -105,6 +106,7 @@ internal fun ImageHistogramContent(
     onCameraBindingChanged: (Boolean) -> Unit,
     onFrameAnalyzed: (RealtimeCameraAnalysis) -> Unit,
     onCameraError: (String) -> Unit,
+    onJudgeCurrentFrame: () -> Unit,
 ) {
     when (destination) {
         AppDestination.HOME -> HomeScreen(
@@ -133,6 +135,7 @@ internal fun ImageHistogramContent(
             onCameraBindingChanged = onCameraBindingChanged,
             onFrameAnalyzed = onFrameAnalyzed,
             onCameraError = onCameraError,
+            onJudgeCurrentFrame = onJudgeCurrentFrame,
         )
     }
 }

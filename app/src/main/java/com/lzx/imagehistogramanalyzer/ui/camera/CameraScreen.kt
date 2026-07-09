@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -50,6 +51,9 @@ import com.lzx.imagehistogramanalyzer.R
 import com.lzx.imagehistogramanalyzer.data.camera.RealtimeFrameAnalyzer
 import com.lzx.imagehistogramanalyzer.domain.camera.RealtimeCameraAnalysis
 import com.lzx.imagehistogramanalyzer.domain.model.ImageQualityCategory
+import com.lzx.imagehistogramanalyzer.domain.photo.PhotoCoachResult
+import com.lzx.imagehistogramanalyzer.domain.photo.PhotoSceneStatus
+import com.lzx.imagehistogramanalyzer.domain.photo.TorchAction
 import com.lzx.imagehistogramanalyzer.ui.component.HistogramCanvas
 import com.lzx.imagehistogramanalyzer.ui.theme.AppSpacing
 import java.util.concurrent.Executors
@@ -64,6 +68,7 @@ fun CameraScreen(
     onCameraBindingChanged: (Boolean) -> Unit,
     onFrameAnalyzed: (RealtimeCameraAnalysis) -> Unit,
     onCameraError: (String) -> Unit,
+    onJudgeCurrentFrame: () -> Unit,
     modifier: Modifier = Modifier,
     previewContent: @Composable () -> Unit = {
         RealtimeCameraPreview(
@@ -89,7 +94,8 @@ fun CameraScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .testTag(CAMERA_SCREEN_LIST_TAG),
             contentPadding = PaddingValues(
                 horizontal = AppSpacing.medium,
                 vertical = AppSpacing.small,
@@ -127,6 +133,12 @@ fun CameraScreen(
                     }
                     item {
                         RealtimeQualityCard(analysis)
+                    }
+                    item {
+                        RealtimePhotoCoachCard(
+                            coachResult = uiState.coachResult,
+                            onJudgeCurrentFrame = onJudgeCurrentFrame,
+                        )
                     }
                 }
             }
@@ -458,6 +470,71 @@ private fun RealtimeQualityCard(analysis: RealtimeCameraAnalysis) {
 }
 
 @Composable
+private fun RealtimePhotoCoachCard(
+    coachResult: PhotoCoachResult?,
+    onJudgeCurrentFrame: () -> Unit,
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(AppSpacing.medium),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.small),
+        ) {
+            Text(
+                text = stringResource(R.string.photo_coach_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                text = stringResource(R.string.photo_coach_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+            )
+            Button(
+                onClick = onJudgeCurrentFrame,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.photo_coach_judge_current_frame))
+            }
+            if (coachResult == null) {
+                Text(
+                    text = stringResource(R.string.photo_coach_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            } else {
+                CameraMetricRow(
+                    label = stringResource(R.string.photo_coach_scene_status),
+                    value = coachResult.sceneStatus.toDisplayText(),
+                )
+                CameraMetricRow(
+                    label = stringResource(R.string.photo_coach_exposure_delta),
+                    value = coachResult.exposureDelta.toExposureDeltaText(),
+                )
+                CameraMetricRow(
+                    label = stringResource(R.string.photo_coach_torch_action),
+                    value = coachResult.torchAction.toDisplayText(),
+                )
+                Text(
+                    text = "${stringResource(R.string.photo_coach_reason)}：${coachResult.reason}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+                Text(
+                    text = "${stringResource(R.string.photo_coach_advice)}：${coachResult.advice}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun CameraMetricRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -475,5 +552,30 @@ private fun ImageQualityCategory.toDisplayText(): String = when (this) {
     ImageQualityCategory.NORMAL -> "正常"
 }
 
+private fun PhotoSceneStatus.toDisplayText(): String = when (this) {
+    PhotoSceneStatus.SEVERE_UNDEREXPOSED -> "严重欠曝"
+    PhotoSceneStatus.DARK -> "偏暗"
+    PhotoSceneStatus.SLIGHTLY_DARK -> "轻微偏暗"
+    PhotoSceneStatus.SEVERE_OVEREXPOSED -> "严重过曝"
+    PhotoSceneStatus.BRIGHT -> "偏亮"
+    PhotoSceneStatus.SLIGHTLY_BRIGHT -> "轻微偏亮"
+    PhotoSceneStatus.LOW_CONTRAST -> "低对比度"
+    PhotoSceneStatus.NORMAL -> "正常"
+}
+
+private fun TorchAction.toDisplayText(): String = when (this) {
+    TorchAction.KEEP -> "保持不变"
+    TorchAction.TURN_ON -> "建议后续开启"
+    TorchAction.TURN_OFF -> "建议关闭"
+}
+
+private fun Int.toExposureDeltaText(): String = when {
+    this > 0 -> "+$this 档"
+    this < 0 -> "$this 档"
+    else -> "保持不变"
+}
+
 private fun Throwable.toCameraUserMessage(): String =
     message?.takeIf { it.isNotBlank() } ?: "相机启动或实时分析失败，请返回后重试"
+
+internal const val CAMERA_SCREEN_LIST_TAG = "camera_screen_list"

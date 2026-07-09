@@ -122,4 +122,13 @@
     <string name="histogram_max_count_label">最高亮度频次</string>
     <string name="realtime_quality_title">实时质量指标</string>
     <string name="realtime_quality_description">以下指标由实时亮度直方图计算，用于辅助观察欠曝、过曝和低对比度趋势。</string>
+    <string name="photo_coach_title">智能拍摄建议</string>
+    <string name="photo_coach_description">点击后基于最近一帧实时直方图生成本地规则建议；当前版本只给建议，不自动修改相机参数。</string>
+    <string name="photo_coach_judge_current_frame">智能判断当前画面</string>
+    <string name="photo_coach_empty">还没有生成建议。请等待实时指标出现后点击上方按钮。</string>
+    <string name="photo_coach_scene_status">画面状态</string>
+    <string name="photo_coach_exposure_delta">曝光建议</string>
+    <string name="photo_coach_torch_action">补光灯建议</string>
+    <string name="photo_coach_reason">判断依据</string>
+    <string name="photo_coach_advice">拍摄建议</string>
 </resources>
