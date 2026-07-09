@@ -84,6 +84,11 @@ fun ImageHistogramApp(
         onFrameAnalyzed = cameraViewModel::onFrameAnalyzed,
         onCameraError = cameraViewModel::onCameraError,
         onJudgeCurrentFrame = cameraViewModel::judgeCurrentFrame,
+        onFreezePreviewFrame = cameraViewModel::freezePreviewFrame,
+        onResumeRealtimePreview = cameraViewModel::resumeRealtimePreview,
+        onSaveFrozenFrame = {
+            cameraViewModel.saveFrozenFrame(context)
+        },
     )
 }
 
@@ -107,6 +112,9 @@ internal fun ImageHistogramContent(
     onFrameAnalyzed: (RealtimeCameraAnalysis) -> Unit,
     onCameraError: (String) -> Unit,
     onJudgeCurrentFrame: () -> Unit,
+    onFreezePreviewFrame: (android.graphics.Bitmap) -> Unit,
+    onResumeRealtimePreview: () -> Unit,
+    onSaveFrozenFrame: () -> Unit,
 ) {
     when (destination) {
         AppDestination.HOME -> HomeScreen(
@@ -136,6 +144,9 @@ internal fun ImageHistogramContent(
             onFrameAnalyzed = onFrameAnalyzed,
             onCameraError = onCameraError,
             onJudgeCurrentFrame = onJudgeCurrentFrame,
+            onFreezePreviewFrame = onFreezePreviewFrame,
+            onResumeRealtimePreview = onResumeRealtimePreview,
+            onSaveFrozenFrame = onSaveFrozenFrame,
         )
     }
 }

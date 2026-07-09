@@ -28,4 +28,5 @@ data class RealtimeCameraAnalysis(
 
 enum class RealtimeFrameSource {
     Y_PLANE,
+    PREVIEW_BITMAP,
 }
