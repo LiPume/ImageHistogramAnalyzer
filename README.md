@@ -32,7 +32,8 @@ ANDROID_SERIAL=emulator-5554 ./scripts/install_test_images.sh
 详细计划见：
 
 - `docs/final/README.md`（最终交付文档总入口）
-- `docs/final/ImageHistogramAnalyzer-课堂验收汇报.pptx`（课堂验收 PPT，本地生成；PPTX 二进制不纳入本次 Git 提交）
+- `docs/final/第十四组_ImageHistogramAnalyzer_课堂汇报.pptx`（15 页课堂汇报终版，封版提交已纳入 Git）
+- `docs/performance/真机性能测试_最终模板.xlsx`（17 个图片 ID 的真机性能填写模板，封版提交已纳入 Git）
 - `docs/Android图像直方图系统开发计划.md`
 - `docs/迭代计划与TODO.md`
 - `docs/协作规范.md`

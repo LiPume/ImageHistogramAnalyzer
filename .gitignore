@@ -17,6 +17,9 @@ local.properties
 captures/
 /test/
 .DS_Store
+~$*.pptx
+~$*.xlsx
+~$*.docx
 
 # 外部开源参考仓库仅供本地阅读，不纳入本项目版本控制
 references/open_source/
