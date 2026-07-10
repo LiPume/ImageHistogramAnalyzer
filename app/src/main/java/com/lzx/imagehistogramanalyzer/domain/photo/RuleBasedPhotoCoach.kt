@@ -7,8 +7,8 @@ import java.util.Locale
 /**
  * 基于实时亮度直方图的本地拍摄建议。
  *
- * 第一版只生成“怎么调”的建议，不触发 CameraControl；后续 CAM-08~10 再把 exposureDelta
- * 和 torchAction 转换成真实相机控制。
+ * 该类只负责输出“怎么调”的建议，不直接触发 CameraControl；真实曝光/补光灯调整由
+ * CameraAdjustmentController 在用户点击手动按钮或“按建议重拍”后执行。
  */
 class RuleBasedPhotoCoach {
     fun analyze(analysis: RealtimeCameraAnalysis): PhotoCoachResult {
@@ -25,7 +25,7 @@ class RuleBasedPhotoCoach {
                 PhotoCoachResult(
                     sceneStatus = PhotoSceneStatus.SEVERE_UNDEREXPOSED,
                     reason = "平均亮度 ${mean.formatOneDecimal()}，暗部溢出约 ${shadowClippingRatio.formatPercent()}，画面可能严重欠曝。",
-                    advice = "建议提高曝光补偿；如果主体仍然太暗，后续可尝试开启补光灯。",
+                    advice = "建议提高曝光补偿；如果主体仍然太暗，可尝试开启补光灯。",
                     exposureDelta = +2,
                     torchAction = TorchAction.TURN_ON,
                 )

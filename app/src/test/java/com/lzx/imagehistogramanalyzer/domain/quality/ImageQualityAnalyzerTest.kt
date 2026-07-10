@@ -78,6 +78,22 @@ class ImageQualityAnalyzerTest {
     }
 
     @Test
+    fun shadowSideDominantHistogram_isDarkEvenWhenStrictDarkBinsAreNotDominant() {
+        val result = analyzer.analyze(histogramOf(70 to 40, 110 to 45, 180 to 15))
+
+        assertEquals(0.0, result.darkRatio, TOLERANCE)
+        assertEquals(ImageQualityCategory.DARK, result.category)
+    }
+
+    @Test
+    fun highlightSideDominantHistogram_isBrightEvenWhenStrictBrightBinsAreNotDominant() {
+        val result = analyzer.analyze(histogramOf(80 to 15, 145 to 45, 185 to 40))
+
+        assertEquals(0.0, result.brightRatio, TOLERANCE)
+        assertEquals(ImageQualityCategory.BRIGHT, result.category)
+    }
+
+    @Test
     fun histogramCountMismatch_isRejected() {
         val counts = IntArray(256).apply { this[128] = 9 }
         val histogram = HistogramResult(

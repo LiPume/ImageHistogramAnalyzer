@@ -1,16 +1,27 @@
 # ImageHistogramAnalyzer
 
-基于 Android 的移动端图像质量分析与直方图计算优化系统，对应课程课题“图像直方图计算及性能优化”。项目计划使用 Kotlin 与 Jetpack Compose，自主实现图片读取、灰度统计、256×100 黑白直方图、性能统计和基础图像质量分析。
+基于 Android 的移动端图像质量分析与直方图计算优化系统，对应课程课题“图像直方图计算及性能优化”。项目使用 Kotlin、Jetpack Compose、Material 3 与 NDK/C++，自主实现图片读取、灰度统计、256×100 黑白直方图、性能统计、图像质量分析、ROI 局部分析和 CameraX 实时拍摄辅助。
 
 ## 当前状态
 
-- 阶段：MVP、基础功能和 UI 体验阶段已完成；v3.0 Native 引擎已在 Xiaomi 14 单次测试中达到 300ms 目标，当前进入 17 个图片 ID 的最终真机验收与交付文档整理。
+- 阶段：MVP、基础功能、UI 体验、Native 性能优化和 v5.0 功能增强主体已完成；v3.0 Native 引擎已在 Xiaomi 14 单次测试中达到 300ms 目标，当前进入 17 个图片 ID 的最终真机验收与交付文档整理。
 - App 已完成 Compose 启动页、系统选图、图片预览、分辨率/像素信息、两种灰度统计方案、256×100 Canvas 直方图和耗时展示。
-- 已增加平均灰度、暗部/亮部占比、灰度标准差和偏暗/偏亮/低对比度/正常质量卡片；指标只读取 256 个直方图频次。
+- 已增加平均灰度、暗部/亮部占比、灰度标准差、RGB 三通道分布、规则化综合分析和偏暗/偏亮/低对比度/正常质量卡片；质量指标优先复用 256 个直方图频次。
 - Xiaomi 真机的系统图片选择器已验证支持现场拍照并返回分析，无需额外相机或相册权限。
 - 页面支持完整纵向滚动；选图后不会自动计算，需要选择“优先灰度化”或“统计时灰度化”，再点击“计算并绘制直方图”。
 - v3.0 已加入 NDK/C++ Native 主引擎：直接锁定 Bitmap，取消 Java 整图彩色像素复制；两方案按行分块、线程私有 256-bin 后归并，并保留 Kotlin v2 回退。性能卡片会显示执行引擎和线程数。
+- v5.0 已完成局部 ROI 框选重新分析、CameraX 实时亮度直方图、点击预览定格分析、保存定格图到相册、曝光/补光灯控制、按建议重拍和右上角三色质量状态徽章。
 - JVM 测试、四 ABI Native 构建、Lint、常规仪器测试和 API 36 模拟器多轮基准已通过。12.58MP 真机单次结果为 56.957ms / 22.244ms，均显著低于 300ms；最终验收按“一张图片 ID 一行、两方案各一次”填写 17 行完整表，不再继续 NEON 或第三方库优化。
+
+## 运行效果图
+
+| 首页与能力说明 | 实时拍摄状态 | 定格建议 |
+|---|---|---|
+| ![首页与能力说明](docs/assets/screenshots/home-overview.jpg) | ![实时拍摄状态](docs/assets/screenshots/camera-status.jpg) | ![定格建议](docs/assets/screenshots/camera-advice.jpg) |
+
+| 静态 RGB / 性能 | ROI 局部分析 | 灰度直方图与质量 |
+|---|---|---|
+| ![静态 RGB 与性能](docs/assets/screenshots/static-rgb-performance.jpg) | ![ROI 局部分析](docs/assets/screenshots/roi-analysis.jpg) | ![灰度直方图与质量](docs/assets/screenshots/histogram-quality.jpg) |
 
 本地五张真实测试图片放在 `test_pic/`（含人物，不上传公开仓库）。安装到指定模拟器：
 
@@ -21,7 +32,7 @@ ANDROID_SERIAL=emulator-5554 ./scripts/install_test_images.sh
 详细计划见：
 
 - `docs/final/README.md`（最终交付文档总入口）
-- `docs/final/ImageHistogramAnalyzer-课堂验收汇报.pptx`（11 页课堂验收 PPT）
+- `docs/final/ImageHistogramAnalyzer-课堂验收汇报.pptx`（课堂验收 PPT，本地生成；PPTX 二进制不纳入本次 Git 提交）
 - `docs/Android图像直方图系统开发计划.md`
 - `docs/迭代计划与TODO.md`
 - `docs/协作规范.md`

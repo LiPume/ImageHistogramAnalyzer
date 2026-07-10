@@ -7,6 +7,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,15 +29,18 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +58,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.lzx.imagehistogramanalyzer.R
+import com.lzx.imagehistogramanalyzer.data.camera.CameraXAdjustmentController
 import com.lzx.imagehistogramanalyzer.data.camera.RealtimeFrameAnalyzer
+import com.lzx.imagehistogramanalyzer.domain.camera.CameraAdjustmentController
+import com.lzx.imagehistogramanalyzer.domain.camera.CameraAdjustmentState
 import com.lzx.imagehistogramanalyzer.domain.camera.RealtimeCameraAnalysis
 import com.lzx.imagehistogramanalyzer.domain.camera.RealtimeFrameSource
 import com.lzx.imagehistogramanalyzer.domain.model.ImageQualityCategory
@@ -65,6 +72,7 @@ import com.lzx.imagehistogramanalyzer.ui.component.HistogramCanvas
 import com.lzx.imagehistogramanalyzer.ui.theme.AppSpacing
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,22 +81,39 @@ fun CameraScreen(
     onBackHome: () -> Unit,
     onRequestPermission: () -> Unit,
     onCameraBindingChanged: (Boolean) -> Unit,
+    onCameraAdjustmentControllerChanged: (CameraAdjustmentController?) -> Unit,
     onFrameAnalyzed: (RealtimeCameraAnalysis) -> Unit,
     onCameraError: (String) -> Unit,
     onJudgeCurrentFrame: () -> Unit,
+    onDecreaseExposure: () -> Unit,
+    onIncreaseExposure: () -> Unit,
+    onToggleTorch: () -> Unit,
+    onApplySuggestedAdjustment: () -> Unit,
     onFreezePreviewFrame: (Bitmap) -> Unit,
     onResumeRealtimePreview: () -> Unit,
     onSaveFrozenFrame: () -> Unit,
     modifier: Modifier = Modifier,
-    previewContent: @Composable () -> Unit = {
+    previewContent: @Composable (Int) -> Unit = { freezeRequestId ->
         RealtimeCameraPreview(
+            freezeRequestId = freezeRequestId,
             onCameraBindingChanged = onCameraBindingChanged,
+            onCameraAdjustmentControllerChanged = onCameraAdjustmentControllerChanged,
             onFrameAnalyzed = onFrameAnalyzed,
             onCameraError = onCameraError,
             onPreviewFrozen = onFreezePreviewFrame,
         )
     },
 ) {
+    var freezeRequestId by remember { mutableStateOf(0) }
+    var controlsExpanded by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.retakeRequestId) {
+        if (uiState.retakeRequestId > 0) {
+            delay(RETAKE_CAPTURE_DELAY_MS)
+            freezeRequestId += 1
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -122,15 +147,26 @@ fun CameraScreen(
                     CameraPermissionCard(onRequestPermission = onRequestPermission)
                 }
             } else {
+                val analysis = uiState.frozenFrame?.analysis ?: uiState.latestAnalysis
                 item {
                     CameraPreviewCard(
                         isBindingCamera = uiState.isBindingCamera,
+                        frameAnalysis = analysis,
                         frozenFrame = uiState.frozenFrame,
+                        adjustmentState = uiState.adjustmentState,
+                        coachResult = uiState.coachResult,
                         isSavingFrozenFrame = uiState.isSavingFrozenFrame,
                         snapshotMessage = uiState.snapshotMessage,
+                        onDecreaseExposure = onDecreaseExposure,
+                        onIncreaseExposure = onIncreaseExposure,
+                        onToggleTorch = onToggleTorch,
+                        onApplySuggestedAdjustment = onApplySuggestedAdjustment,
+                        onFreezePreviewRequest = { freezeRequestId += 1 },
                         onResumeRealtimePreview = onResumeRealtimePreview,
                         onSaveFrozenFrame = onSaveFrozenFrame,
-                        previewContent = previewContent,
+                        controlsExpanded = controlsExpanded,
+                        onControlsExpandedChange = { controlsExpanded = it },
+                        previewContent = { previewContent(freezeRequestId) },
                     )
                 }
                 uiState.errorMessage?.let { message ->
@@ -138,7 +174,6 @@ fun CameraScreen(
                         CameraErrorCard(message)
                     }
                 }
-                val analysis = uiState.frozenFrame?.analysis ?: uiState.latestAnalysis
                 if (analysis == null) {
                     item {
                         WaitingForFrameCard()
@@ -164,7 +199,9 @@ fun CameraScreen(
 
 @Composable
 private fun RealtimeCameraPreview(
+    freezeRequestId: Int,
     onCameraBindingChanged: (Boolean) -> Unit,
+    onCameraAdjustmentControllerChanged: (CameraAdjustmentController?) -> Unit,
     onFrameAnalyzed: (RealtimeCameraAnalysis) -> Unit,
     onCameraError: (String) -> Unit,
     onPreviewFrozen: (Bitmap) -> Unit,
@@ -174,6 +211,7 @@ private fun RealtimeCameraPreview(
     val latestOnFrameAnalyzed by rememberUpdatedState(onFrameAnalyzed)
     val latestOnCameraError by rememberUpdatedState(onCameraError)
     val latestOnBindingChanged by rememberUpdatedState(onCameraBindingChanged)
+    val latestOnControllerChanged by rememberUpdatedState(onCameraAdjustmentControllerChanged)
     val latestOnPreviewFrozen by rememberUpdatedState(onPreviewFrozen)
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
 
@@ -204,33 +242,16 @@ private fun RealtimeCameraPreview(
                 }
             },
         )
-        Button(
-            onClick = {
-                capturePreviewBitmap(
-                    previewView = previewView,
-                    onPreviewFrozen = latestOnPreviewFrozen,
-                    onCameraError = latestOnCameraError,
-                )
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(AppSpacing.small),
-        ) {
-            Text(stringResource(R.string.freeze_camera_frame))
+    }
+
+    LaunchedEffect(freezeRequestId, previewView) {
+        if (freezeRequestId > 0) {
+            capturePreviewBitmap(
+                previewView = previewView,
+                onPreviewFrozen = latestOnPreviewFrozen,
+                onCameraError = latestOnCameraError,
+            )
         }
-        AssistChip(
-            onClick = {
-                capturePreviewBitmap(
-                    previewView = previewView,
-                    onPreviewFrozen = latestOnPreviewFrozen,
-                    onCameraError = latestOnCameraError,
-                )
-            },
-            label = { Text(stringResource(R.string.freeze_camera_hint)) },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(AppSpacing.small),
-        )
     }
 
     DisposableEffect(context, lifecycleOwner, previewView) {
@@ -262,15 +283,17 @@ private fun RealtimeCameraPreview(
                         }
 
                     cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
+                    val camera = cameraProvider.bindToLifecycle(
                         lifecycleOwner,
                         CameraSelector.DEFAULT_BACK_CAMERA,
                         preview,
                         imageAnalysis,
                     )
+                    latestOnControllerChanged(CameraXAdjustmentController(camera))
                     latestOnBindingChanged(false)
                 } catch (error: Throwable) {
                     latestOnBindingChanged(false)
+                    latestOnControllerChanged(null)
                     latestOnCameraError(error.toCameraUserMessage())
                 }
             },
@@ -281,6 +304,7 @@ private fun RealtimeCameraPreview(
             if (cameraProviderFuture.isDone) {
                 runCatching { cameraProviderFuture.get().unbindAll() }
             }
+            latestOnControllerChanged(null)
             cameraExecutor.shutdown()
         }
     }
@@ -346,11 +370,21 @@ private fun CameraPermissionCard(onRequestPermission: () -> Unit) {
 @Composable
 private fun CameraPreviewCard(
     isBindingCamera: Boolean,
+    frameAnalysis: RealtimeCameraAnalysis?,
     frozenFrame: FrozenCameraFrame?,
+    adjustmentState: CameraAdjustmentState,
+    coachResult: PhotoCoachResult?,
     isSavingFrozenFrame: Boolean,
     snapshotMessage: String?,
+    onDecreaseExposure: () -> Unit,
+    onIncreaseExposure: () -> Unit,
+    onToggleTorch: () -> Unit,
+    onApplySuggestedAdjustment: () -> Unit,
+    onFreezePreviewRequest: () -> Unit,
     onResumeRealtimePreview: () -> Unit,
     onSaveFrozenFrame: () -> Unit,
+    controlsExpanded: Boolean,
+    onControlsExpandedChange: (Boolean) -> Unit,
     previewContent: @Composable () -> Unit,
 ) {
     Card {
@@ -367,15 +401,18 @@ private fun CameraPreviewCard(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center,
             ) {
-                if (frozenFrame == null) {
-                    previewContent()
-                } else {
-                    FrozenPreviewContent(
-                        frozenFrame = frozenFrame,
-                        isSavingFrozenFrame = isSavingFrozenFrame,
-                        snapshotMessage = snapshotMessage,
-                        onResumeRealtimePreview = onResumeRealtimePreview,
-                        onSaveFrozenFrame = onSaveFrozenFrame,
+                previewContent()
+                if (frozenFrame != null) {
+                    FrozenPreviewImage(frozenFrame)
+                }
+                frameAnalysis?.let { analysis ->
+                    CameraFrameStatusBadge(
+                        status = analysis.toFrameStatus(
+                            coachResult = coachResult.takeIf { frozenFrame != null },
+                        ),
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(AppSpacing.small),
                     )
                 }
                 if (isBindingCamera) {
@@ -391,14 +428,309 @@ private fun CameraPreviewCard(
                     }
                 }
             }
+            CameraAdjustmentPanel(
+                isFrozen = frozenFrame != null,
+                expanded = controlsExpanded,
+                adjustmentState = adjustmentState,
+                coachResult = coachResult,
+                onFreezePreviewRequest = onFreezePreviewRequest,
+                onDecreaseExposure = onDecreaseExposure,
+                onIncreaseExposure = onIncreaseExposure,
+                onToggleTorch = onToggleTorch,
+                onApplySuggestedAdjustment = onApplySuggestedAdjustment,
+                onExpandedChange = onControlsExpandedChange,
+            )
+            frozenFrame?.let {
+                FrozenFrameActions(
+                    snapshotMessage = snapshotMessage,
+                    isSavingFrozenFrame = isSavingFrozenFrame,
+                    hasSavedFrame = it.savedUri != null,
+                    onResumeRealtimePreview = onResumeRealtimePreview,
+                    onSaveFrozenFrame = onSaveFrozenFrame,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun FrozenPreviewContent(
+private fun CameraAdjustmentPanel(
+    isFrozen: Boolean,
+    expanded: Boolean,
+    adjustmentState: CameraAdjustmentState,
+    coachResult: PhotoCoachResult?,
+    onFreezePreviewRequest: () -> Unit,
+    onDecreaseExposure: () -> Unit,
+    onIncreaseExposure: () -> Unit,
+    onToggleTorch: () -> Unit,
+    onApplySuggestedAdjustment: () -> Unit,
+    onExpandedChange: (Boolean) -> Unit,
+) {
+    val hasActionableSuggestion = coachResult?.hasActionableCameraSuggestion() == true
+    val hasSupportedSuggestion = coachResult?.hasSupportedCameraSuggestion(adjustmentState) == true
+    val retakeActionText = retakeActionText(coachResult)
+    val canRetakeWithSuggestion = isFrozen &&
+        hasSupportedSuggestion &&
+        !adjustmentState.isAdjusting
+    val helperText = when {
+        !isFrozen -> stringResource(R.string.camera_retake_live_hint)
+        coachResult == null -> stringResource(R.string.camera_retake_waiting_hint)
+        coachResult.isGoodFrame() -> stringResource(R.string.camera_retake_not_needed_hint)
+        !hasActionableSuggestion -> stringResource(R.string.camera_retake_review_advice_hint)
+        !hasSupportedSuggestion -> stringResource(R.string.camera_retake_unavailable_hint)
+        else -> stringResource(R.string.camera_retake_ready_hint)
+    }
+    val compactStatusText = when {
+        !isFrozen -> exposureStatusText(adjustmentState)
+        coachResult?.isGoodFrame() == true -> stringResource(R.string.camera_retake_good_compact_hint)
+        coachResult == null -> stringResource(R.string.camera_retake_waiting_hint)
+        coachResult.toFrameStatus() == CameraFrameStatus.BAD ->
+            stringResource(R.string.camera_retake_bad_compact_hint)
+        else -> stringResource(R.string.camera_retake_compact_hint)
+    }
+
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(AppSpacing.small),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.extraSmall),
+        ) {
+            if (!expanded) {
+                CompactCameraControlRow(
+                    isFrozen = isFrozen,
+                    canRetakeWithSuggestion = canRetakeWithSuggestion,
+                    isAdjusting = adjustmentState.isAdjusting,
+                    statusText = compactStatusText,
+                    retakeActionText = retakeActionText,
+                    onFreezePreviewRequest = onFreezePreviewRequest,
+                    onApplySuggestedAdjustment = onApplySuggestedAdjustment,
+                    onExpand = { onExpandedChange(true) },
+                )
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.camera_control_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                    TextButton(onClick = { onExpandedChange(false) }) {
+                        Text(stringResource(R.string.camera_control_collapse))
+                    }
+                }
+                AssistChip(
+                    onClick = {},
+                    label = { Text(exposureStatusText(adjustmentState)) },
+                )
+                adjustmentState.message?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.small),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    OutlinedButton(
+                        onClick = onFreezePreviewRequest,
+                        enabled = !isFrozen && !adjustmentState.isAdjusting,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(stringResource(R.string.freeze_camera_frame))
+                    }
+                    Button(
+                        onClick = onApplySuggestedAdjustment,
+                        enabled = canRetakeWithSuggestion,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(retakeActionText)
+                    }
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.extraSmall),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    OutlinedButton(
+                        onClick = onDecreaseExposure,
+                        enabled = adjustmentState.canDecreaseExposure,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(stringResource(R.string.camera_exposure_down))
+                    }
+                    OutlinedButton(
+                        onClick = onIncreaseExposure,
+                        enabled = adjustmentState.canIncreaseExposure,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(stringResource(R.string.camera_exposure_up))
+                    }
+                }
+                OutlinedButton(
+                    onClick = onToggleTorch,
+                    enabled = adjustmentState.canToggleTorch,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        if (!adjustmentState.hasFlashUnit) {
+                            stringResource(R.string.camera_torch_unavailable)
+                        } else if (adjustmentState.isTorchOn) {
+                            stringResource(R.string.camera_torch_off)
+                        } else {
+                            stringResource(R.string.camera_torch_on)
+                        },
+                    )
+                }
+                Text(
+                    text = helperText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompactCameraControlRow(
+    isFrozen: Boolean,
+    canRetakeWithSuggestion: Boolean,
+    isAdjusting: Boolean,
+    statusText: String,
+    retakeActionText: String,
+    onFreezePreviewRequest: () -> Unit,
+    onApplySuggestedAdjustment: () -> Unit,
+    onExpand: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AppSpacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.camera_control_title),
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                text = statusText,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (isFrozen) {
+            Button(
+                onClick = onApplySuggestedAdjustment,
+                enabled = canRetakeWithSuggestion,
+            ) {
+                Text(retakeActionText)
+            }
+        } else {
+            OutlinedButton(
+                onClick = onFreezePreviewRequest,
+                enabled = !isAdjusting,
+            ) {
+                Text(stringResource(R.string.freeze_camera_frame))
+            }
+        }
+        TextButton(onClick = onExpand) {
+            Text(stringResource(R.string.camera_control_expand))
+        }
+    }
+}
+
+@Composable
+private fun CameraFrameStatusBadge(
+    status: CameraFrameStatus,
+    modifier: Modifier = Modifier,
+) {
+    val label = stringResource(status.labelRes)
+    val description = stringResource(R.string.camera_frame_status_description, label)
+    Surface(
+        modifier = modifier.semantics {
+            contentDescription = description
+        },
+        shape = MaterialTheme.shapes.small,
+        color = when (status) {
+            CameraFrameStatus.GOOD -> MaterialTheme.colorScheme.secondaryContainer
+            CameraFrameStatus.WARNING -> MaterialTheme.colorScheme.tertiaryContainer
+            CameraFrameStatus.BAD -> MaterialTheme.colorScheme.errorContainer
+        },
+        contentColor = when (status) {
+            CameraFrameStatus.GOOD -> MaterialTheme.colorScheme.onSecondaryContainer
+            CameraFrameStatus.WARNING -> MaterialTheme.colorScheme.onTertiaryContainer
+            CameraFrameStatus.BAD -> MaterialTheme.colorScheme.onErrorContainer
+        },
+        tonalElevation = 2.dp,
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(
+                horizontal = AppSpacing.small,
+                vertical = AppSpacing.extraSmall,
+            ),
+            style = MaterialTheme.typography.labelMedium,
+        )
+    }
+}
+
+@Composable
+private fun exposureStatusText(adjustmentState: CameraAdjustmentState): String =
+    if (adjustmentState.isExposureSupported) {
+        stringResource(
+            R.string.camera_exposure_status,
+            adjustmentState.exposureIndex,
+            adjustmentState.minExposureIndex,
+            adjustmentState.maxExposureIndex,
+        )
+    } else {
+        stringResource(R.string.camera_exposure_unsupported)
+    }
+
+@Composable
+private fun FrozenPreviewImage(
     frozenFrame: FrozenCameraFrame,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(320.dp)
+            .clip(MaterialTheme.shapes.large),
+    ) {
+        Image(
+            bitmap = frozenFrame.bitmap.asImageBitmap(),
+            contentDescription = stringResource(R.string.frozen_camera_frame_description),
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+        AssistChip(
+            onClick = {},
+            label = { Text(stringResource(R.string.frozen_camera_frame_badge)) },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(AppSpacing.small),
+        )
+    }
+}
+
+@Composable
+private fun FrozenFrameActions(
     isSavingFrozenFrame: Boolean,
+    hasSavedFrame: Boolean,
     snapshotMessage: String?,
     onResumeRealtimePreview: () -> Unit,
     onSaveFrozenFrame: () -> Unit,
@@ -406,26 +738,6 @@ private fun FrozenPreviewContent(
     Column(
         verticalArrangement = Arrangement.spacedBy(AppSpacing.small),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(320.dp)
-                .clip(MaterialTheme.shapes.large),
-        ) {
-            Image(
-                bitmap = frozenFrame.bitmap.asImageBitmap(),
-                contentDescription = stringResource(R.string.frozen_camera_frame_description),
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-            )
-            AssistChip(
-                onClick = onResumeRealtimePreview,
-                label = { Text(stringResource(R.string.frozen_camera_frame_badge)) },
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(AppSpacing.small),
-            )
-        }
         Text(
             text = snapshotMessage ?: stringResource(R.string.frozen_camera_frame_message),
             style = MaterialTheme.typography.bodySmall,
@@ -455,7 +767,7 @@ private fun FrozenPreviewContent(
                 Text(stringResource(R.string.resume_realtime_preview))
             }
         }
-        frozenFrame.savedUri?.let {
+        if (hasSavedFrame) {
             Text(
                 text = stringResource(R.string.frozen_frame_saved),
                 style = MaterialTheme.typography.bodySmall,
@@ -731,10 +1043,62 @@ private fun Int.toExposureDeltaText(): String = when {
     else -> "保持不变"
 }
 
+private enum class CameraFrameStatus(val labelRes: Int) {
+    GOOD(R.string.camera_frame_status_good),
+    WARNING(R.string.camera_frame_status_warning),
+    BAD(R.string.camera_frame_status_bad),
+}
+
+private fun RealtimeCameraAnalysis.toFrameStatus(
+    coachResult: PhotoCoachResult?,
+): CameraFrameStatus =
+    coachResult?.toFrameStatus() ?: when (qualityResult.category) {
+        ImageQualityCategory.NORMAL -> CameraFrameStatus.GOOD
+        ImageQualityCategory.LOW_CONTRAST -> CameraFrameStatus.WARNING
+        ImageQualityCategory.DARK,
+        ImageQualityCategory.BRIGHT,
+        -> CameraFrameStatus.BAD
+    }
+
+private fun PhotoCoachResult.toFrameStatus(): CameraFrameStatus = when (sceneStatus) {
+    PhotoSceneStatus.NORMAL -> CameraFrameStatus.GOOD
+    PhotoSceneStatus.SLIGHTLY_DARK,
+    PhotoSceneStatus.SLIGHTLY_BRIGHT,
+    PhotoSceneStatus.LOW_CONTRAST,
+    -> CameraFrameStatus.WARNING
+
+    PhotoSceneStatus.SEVERE_UNDEREXPOSED,
+    PhotoSceneStatus.DARK,
+    PhotoSceneStatus.SEVERE_OVEREXPOSED,
+    PhotoSceneStatus.BRIGHT,
+    -> CameraFrameStatus.BAD
+}
+
+private fun PhotoCoachResult.isGoodFrame(): Boolean =
+    sceneStatus == PhotoSceneStatus.NORMAL && !hasActionableCameraSuggestion()
+
+private fun PhotoCoachResult.hasActionableCameraSuggestion(): Boolean =
+    exposureDelta != 0 || torchAction != TorchAction.KEEP
+
+private fun PhotoCoachResult.hasSupportedCameraSuggestion(
+    adjustmentState: CameraAdjustmentState,
+): Boolean =
+    (exposureDelta != 0 && adjustmentState.isExposureSupported) ||
+        (torchAction != TorchAction.KEEP && adjustmentState.hasFlashUnit)
+
+@Composable
+private fun retakeActionText(coachResult: PhotoCoachResult?): String = when {
+    coachResult?.isGoodFrame() == true -> stringResource(R.string.camera_retake_not_needed)
+    coachResult != null && !coachResult.hasActionableCameraSuggestion() ->
+        stringResource(R.string.camera_retake_review_advice)
+    else -> stringResource(R.string.camera_retake_with_suggestion)
+}
+
 private fun Throwable.toCameraUserMessage(): String =
     message?.takeIf { it.isNotBlank() } ?: "相机启动或实时分析失败，请返回后重试"
 
 internal const val CAMERA_SCREEN_LIST_TAG = "camera_screen_list"
+private const val RETAKE_CAPTURE_DELAY_MS = 700L
 
 private fun capturePreviewBitmap(
     previewView: PreviewView?,
