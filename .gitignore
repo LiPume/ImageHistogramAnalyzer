@@ -29,3 +29,7 @@ docs/*.docx
 
 # 含人物的本地真实测试图片不上传公开仓库
 test_pic/
+
+# 演示视频体积超过 GitHub 单文件限制，仅保留封面和发布说明
+/demo/*.mp4
+/demo/*.mov

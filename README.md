@@ -1,101 +1,93 @@
 # ImageHistogramAnalyzer
 
-基于 Android 的移动端图像质量分析与直方图计算优化系统，对应课程课题“图像直方图计算及性能优化”。项目使用 Kotlin、Jetpack Compose、Material 3 与 NDK/C++，自主实现图片读取、灰度统计、256×100 黑白直方图、性能统计、图像质量分析、ROI 局部分析和 CameraX 实时拍摄辅助。
+杭州电子科技大学短学期“图像直方图计算及性能优化”课程项目：一款离线运行的 Android 图像质量分析与智能拍摄辅助 App。
 
-## 当前状态
+项目使用 Kotlin、Jetpack Compose、Material 3、CameraX 与 NDK/C++，从课程要求的 256×100 灰度直方图出发，完成静态图片分析、RGB 分布、ROI 局部分析、图像质量解释以及实时相机拍摄反馈。
 
-- 阶段：MVP、基础功能、UI 体验、Native 性能优化和 v5.0 功能增强主体已完成；v3.0 Native 引擎已在 Xiaomi 14 单次测试中达到 300ms 目标，当前进入 17 个图片 ID 的最终真机验收与交付文档整理。
-- App 已完成 Compose 启动页、系统选图、图片预览、分辨率/像素信息、两种灰度统计方案、256×100 Canvas 直方图和耗时展示。
-- 已增加平均灰度、暗部/亮部占比、灰度标准差、RGB 三通道分布、规则化综合分析和偏暗/偏亮/低对比度/正常质量卡片；质量指标优先复用 256 个直方图频次。
-- Xiaomi 真机的系统图片选择器已验证支持现场拍照并返回分析，无需额外相机或相册权限。
-- 页面支持完整纵向滚动；选图后不会自动计算，需要选择“优先灰度化”或“统计时灰度化”，再点击“计算并绘制直方图”。
-- v3.0 已加入 NDK/C++ Native 主引擎：直接锁定 Bitmap，取消 Java 整图彩色像素复制；两方案按行分块、线程私有 256-bin 后归并，并保留 Kotlin v2 回退。性能卡片会显示执行引擎和线程数。
-- v5.0 已完成局部 ROI 框选重新分析、CameraX 实时亮度直方图、点击预览定格分析、保存定格图到相册、曝光/补光灯控制、按建议重拍和右上角三色质量状态徽章。
-- JVM 测试、四 ABI Native 构建、Lint、常规仪器测试和 API 36 模拟器多轮基准已通过。12.58MP 真机单次结果为 56.957ms / 22.244ms，均显著低于 300ms；最终验收按“一张图片 ID 一行、两方案各一次”填写 17 行完整表，不再继续 NEON 或第三方库优化。
+## 项目亮点
 
-## 运行效果图
+- **课程指标可验证**：严格使用 `gray = red × 0.299 + green × 0.587 + blue × 0.114`，输出 256 个灰度频次并归一化到 0–100。
+- **两条计算路径**：实现“优先灰度化”和“统计时灰度化”，并用测试保证两者结果一致。
+- **从 Kotlin 到 Native**：v3.0 通过直接锁定 Bitmap、C++ 行分块、多线程私有直方图和最终归并，避免 Java 整图像素数组复制。
+- **真机达到目标**：Xiaomi 14、12.58MP 测试图、Native v3.0、8 工作线程的一次封版记录为 **30.661ms**，低于课程要求的 300ms。该数值是指定设备与样本记录，不代表所有设备的统一性能。
+- **不仅展示数字**：提供灰度/RGB 曲线、平均灰度、暗亮部占比、标准差、色偏和自然语言质量建议。
+- **智能拍摄助手**：CameraX 实时亮度直方图、三色质量状态、定格分析、保存相册、曝光微调、补光灯与按建议重拍。
+- **局部分析**：支持框选 ROI 后重新生成直方图与质量结论，并可恢复全图。
+- **完整工程证据**：封版功能总表覆盖 21 项功能检查，结果均记录为通过；代码、测试、性能口径、文档和答辩材料保持同步。
 
-| 首页与能力说明 | 实时拍摄状态 | 定格建议 |
+## 运行效果
+
+| 首页 | 实时拍摄 | 拍摄建议 |
 |---|---|---|
-| ![首页与能力说明](docs/assets/screenshots/home-overview.jpg) | ![实时拍摄状态](docs/assets/screenshots/camera-status.jpg) | ![定格建议](docs/assets/screenshots/camera-advice.jpg) |
+| ![首页](docs/assets/screenshots/home-overview.jpg) | ![实时拍摄](docs/assets/screenshots/camera-status.jpg) | ![拍摄建议](docs/assets/screenshots/camera-advice.jpg) |
 
-| 静态 RGB / 性能 | ROI 局部分析 | 灰度直方图与质量 |
+| RGB 与性能 | ROI 局部分析 | 灰度与质量分析 |
 |---|---|---|
-| ![静态 RGB 与性能](docs/assets/screenshots/static-rgb-performance.jpg) | ![ROI 局部分析](docs/assets/screenshots/roi-analysis.jpg) | ![灰度直方图与质量](docs/assets/screenshots/histogram-quality.jpg) |
+| ![RGB 与性能](docs/assets/screenshots/static-rgb-performance.jpg) | ![ROI](docs/assets/screenshots/roi-analysis.jpg) | ![灰度与质量](docs/assets/screenshots/histogram-quality.jpg) |
 
-本地五张真实测试图片放在 `test_pic/`（含人物，不上传公开仓库）。安装到指定模拟器：
+演示视频说明见 [demo/README.md](demo/README.md)。原始竖屏视频约 285MB，不纳入 Git；公开发布地址可在发布后补入该页。
 
-```bash
-ANDROID_SERIAL=emulator-5554 ./scripts/install_test_images.sh
-```
-
-详细计划见：
-
-- `docs/final/README.md`（最终交付文档总入口）
-- `docs/final/第十四组_ImageHistogramAnalyzer_课堂汇报.pptx`（15 页课堂汇报终版，封版提交已纳入 Git）
-- `docs/performance/真机性能测试_最终模板.xlsx`（17 个图片 ID 的真机性能填写模板，封版提交已纳入 Git）
-- `docs/Android图像直方图系统开发计划.md`
-- `docs/迭代计划与TODO.md`
-- `docs/协作规范.md`
-- `docs/开源项目技术借鉴记录.md`
-- `docs/性能优化数据表.md`
-- `docs/测试图片清单.md`
-
-## 项目专用 Agent Skill
-
-项目级技能位于：
+## 技术栈与结构
 
 ```text
-.github/skills/image-histogram-android/
+Android / Kotlin / Jetpack Compose / Material 3
+ViewModel + StateFlow / Coroutines
+CameraX / Bitmap / Compose Canvas
+JNI + C++ multithreading
 ```
 
-它约束 AI 助手遵循本项目的单模块架构、课程范围、灰度公式、256×100 输出、性能证据和文档同步要求。Codex 可使用 `$image-histogram-android` 显式调用；其他支持 Agent Skills 的工具可直接读取该目录中的 `SKILL.md`。
+```text
+app/src/main/
+├── java/.../data       # 图片解码、CameraX 与设备控制
+├── java/.../domain     # 直方图、质量判断、ROI、拍摄建议
+├── java/.../ui         # 页面、状态与可复用 Compose 组件
+└── cpp                 # Native Bitmap 访问与并行统计
+```
 
-配套工作流技能：
+项目保持单模块、离线和本地计算，不包含登录、数据库、后端或云服务。
 
-- `$android-test-gate`：每完成一段代码，选择并执行匹配的分层测试。
-- `$project-doc-sync`：根据真实实现与测试证据同步 TODO、设计、测试和使用文档。
-- `$project-git-checkpoint`：在任务、阶段和交接节点建立安全、可回退的 Git 检查点。
+## 构建与运行
 
-## 获取外部参考仓库
-
-外部项目仅供本地技术调研，不属于本项目源码，也不会被 Git 提交。首次使用或需要更新时执行：
+环境建议：Android Studio、JDK 17、Android SDK，以及由 Gradle 自动配置的 NDK/CMake。
 
 ```bash
-./scripts/fetch_references.sh
+git clone git@github.com:LiPume/ImageHistogramAnalyzer.git
+cd ImageHistogramAnalyzer
+./gradlew :app:assembleDebug
 ```
 
-脚本会将图像直方图参考项目和 Android Agent Skills 素材库放在 `references/open_source/`。禁止把其中代码直接复制到 `app/src/main`，也不要把外部技能整套复制进本项目。
+APK 位于 `app/build/outputs/apk/debug/`。Windows 组员使用仓库自带的 `gradlew.bat`；`local.properties` 不随 Git 分发，需要 Android Studio 在本机生成。
 
-## 开发与文档并行原则
-
-1. 每完成一个功能模块，必须同步更新对应文档。
-2. 每次重要代码变更后，需要在 TODO 文档中更新状态。
-3. 提交信息应清楚描述变更类型，例如：
-   - `feat: add image picker`
-   - `feat: implement baseline histogram`
-   - `docs: update project plan`
-   - `test: add histogram unit test`
-   - `perf: optimize bitmap pixel reading`
-4. `main` 分支必须保持可运行。
-5. 不允许多人同时大幅修改 `MainActivity.kt`、`build.gradle.kts`、`AndroidManifest.xml`。
-6. 算法、UI、文档、测试按模块协作，避免职责混杂。
-7. 每个阶段结束时提交一次阶段性 commit。
-8. 不加入登录、注册、数据库、后端、云服务等无关功能。
-9. 先保证基本功能能在手机上运行，再进行性能优化。
-
-## 提交前检查
+验证命令：
 
 ```bash
-git status --short
-./gradlew test
-./gradlew assembleDebug
+./gradlew :app:testDebugUnitTest :app:assembleDebug \
+  :app:assembleDebugAndroidTest :app:lintDebug
 ```
 
-提交前确认没有纳入 `build/`、`.gradle/`、`local.properties` 或 `references/open_source/`。
+## 文档与成果
 
-显式运行模拟器性能基准：
+- [最终开发文档入口](docs/final/README.md)
+- [功能全景与测试基线](docs/当前功能全景与测试规划基线.md)
+- [迭代计划与 TODO](docs/迭代计划与TODO.md)
+- [算法与性能优化说明](docs/final/05-算法与性能优化说明.md)
+- [测试计划与测试用例](docs/final/06-测试计划与测试用例.md)
+- [封版功能测试总表](docs/performance/第十四组_按功能测试总表.xlsx)
+- [课堂汇报 PPTX](docs/final/第十四组_ImageHistogramAnalyzer_课堂汇报.pptx)
+- [版本记录](CHANGELOG.md)
 
-```bash
-ANDROID_SERIAL=emulator-5554 ./scripts/run_emulator_benchmark.sh
-```
+## Skill-driven Vibe Coding
+
+本项目把 Vibe Coding 当作“受规则约束的协作开发”，而不是一键生成：成员负责需求取舍、公式确认、真机验证和验收，Agent 负责加速实现、回归检查与文档同步。
+
+- `image-histogram-android`：约束课程边界、架构、算法与性能口径。
+- `android-test-gate`：每个代码切片匹配相应测试与构建门禁。
+- `project-doc-sync`：实现、TODO、使用说明和测试报告同步。
+- `project-git-checkpoint`：显式暂存、验证后提交和可回退封版。
+- `course-presentation`：从可追踪证据生成并检查答辩材料。
+
+第三方仓库只用于学习技术思路，未直接复制到 App 源码；详见[开源项目技术借鉴记录](docs/开源项目技术借鉴记录.md)。
+
+## 学术诚信与使用边界
+
+本仓库用于课程成果展示与技术交流。引用、改编或复用时请注明来源，并遵守所在课程的学术诚信要求。团队成员信息与答辩文档按课程交付场景保留；请勿将其用于无关用途。
