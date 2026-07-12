@@ -86,6 +86,8 @@ APK 位于 `app/build/outputs/apk/debug/`。Windows 组员使用仓库自带的 
 - `project-git-checkpoint`：显式暂存、验证后提交和可回退封版。
 - `course-presentation`：从可追踪证据生成并检查答辩材料。
 
+这些课程化适配的 Skill 已作为可复用工具包开源，清单、组合方式、安装和迁移注意事项见 [Android 课程项目 Agent Skills](skills/README.md)。Skill 文档采用 MIT License；迁移到其他项目时必须替换包名、指标、构建命令和测试证据，不能照抄本项目的真机数据。
+
 第三方仓库只用于学习技术思路，未直接复制到 App 源码；详见[开源项目技术借鉴记录](docs/开源项目技术借鉴记录.md)。
 
 ## 学术诚信与使用边界
